@@ -58,12 +58,40 @@ void printMatrix(const std::vector<std::vector<float>>& M, const std::string& na
     };
 
     if (!cap) {
-        for (int i = 0; i < totalRows; i++)
+        for (int i = 0; i < totalRows; ++i)
+            printRow(i);
+    } else {
+        for (int i = 0; i < *cap; ++i)
+            printRow(i);
+        std::cout << "   ⋮\n";
+        printRow(totalRows - 1);
+    }
+}
+
+void printMatrixFlat(const std::vector<float>& M, int rows, int cols, const std::string& name, std::optional<int> cap) {
+    assert(!cap || (*cap <= rows && *cap <= cols));
+
+    if (!name.empty())
+        std::cout << name << " [" << rows << "x" << cols << "]:\n";
+
+    auto printRow = [&](int i) {
+        int printCols = cap.value_or(cols);
+        for (int j = 0; j < printCols; j++)
+            std::cout << std::setw(8) << std::setprecision(3) << std::fixed << M[i*cols + j] << " ";
+        if (cap) {
+            std::cout << "   ...";
+            std::cout << std::setw(8) << std::setprecision(3) << std::fixed << M[i*cols + cols - 1];
+        }
+        std::cout << "\n";
+    };
+
+    if (!cap) {
+        for (int i = 0; i < rows; i++)
             printRow(i);
     } else {
         for (int i = 0; i < *cap; i++)
             printRow(i);
         std::cout << "   ⋮\n";
-        printRow(totalRows - 1);
+        printRow(rows - 1);
     }
 }

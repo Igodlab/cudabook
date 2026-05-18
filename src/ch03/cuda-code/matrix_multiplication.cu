@@ -24,13 +24,13 @@ __global__ void MatrixMulKernel(
 }
 
 int main(void) {
-  // Square matrices dim (i,j)=(n,m)
-  int n = 10;
-  int m = n;
+  // Square matrices dim (j,i)=(n,m)
+  int m = 10;
+  int n = m;
 
-  std::vector<std::vector<float>> M(m, std::vector<float>(n));
-  std::vector<std::vector<float>> N(m, std::vector<float>(n));
-  std::vector<std::vector<float>> P(m, std::vector<float>(n));
+  std::vector<float> M(m * n);
+  std::vector<float> N(m * n);
+  std::vector<float> P(m * n);
 
   // random device and values
   float u_min = -10.0f;
@@ -40,11 +40,11 @@ int main(void) {
   std::mt19937 rng(rd());
   std::uniform_real_distribution<float> uniform_dist(u_min, u_max);
 
-  // populate M, N
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < m; j++) {
-      M[i][j] = uniform_dist(rng);
-      N[i][j] = uniform_dist(rng);
+  // populate M, N using row-major indexing
+  for (int i = 0; i < m; ++i) {
+    for (int j = 0; j < n; ++j) {
+      M[i * n + j] = uniform_dist(rng);
+      N[i * n + j] = uniform_dist(rng);
     }
   }
 
@@ -64,9 +64,14 @@ int main(void) {
 
   cudaMemcpy(P.data(), P_d, matByteDim, cudaMemcpyDeviceToHost);
 
-  // printMatrix(P, "P");
+  // Print Matrices using printMatrixFlat(matrix, rows, cols, name, cap(optional))
+  printMatrixFlat(M, m, n, "M", 3);
+  printMatrixFlat(N, m, n, "N", 3);
+  printMatrixFlat(P, m, n, "P", 3);
 
   cudaFree(M_d);
   cudaFree(N_d);
   cudaFree(P_d);
+
+  return 0;
 }
