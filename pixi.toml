@@ -61,15 +61,7 @@ cmd = "jupyter lab --allow-root"
 
 # >>> Tasks per chapter >>>
 [tasks.build]
-cmd = """
-cmake -S . -B build \
-      -DCMAKE_BUILD_TYPE=Release \
-&& cmake --build build --parallel
-"""
-
-[tasks.run]
-cmd = "build/${PIXI_TASK_ARGS}"
-depends-on = ["build"]
+cmd = "cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build --parallel"
 
 [tasks.clean]
 cmd = "rm -rf build"

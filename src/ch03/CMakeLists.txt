@@ -5,11 +5,9 @@ find_package(OpenCV REQUIRED)
 find_package(CUDAToolkit REQUIRED)
 
 # -----------------------------------------------------------------------
-# ch03 utils — scoped to this chapter, not shared with other chapters
+# ch03 utils — scoped to this chapter (not shared with other chapters)
 # -----------------------------------------------------------------------
-add_library(ch03_utils STATIC
-    cuda-code/utils.cpp
-)
+add_library(ch03_utils STATIC cuda-code/utils.cpp)
 
 target_include_directories(ch03_utils PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/cuda-code   # utils.hpp visible to all ch03 targets
