@@ -10,4 +10,4 @@ void saveImage(const std::string& outputPath, const cv::Mat& image);
 
 void printVec(const float* V, int n, std::optional<int> cap = std::nullopt);
 
-// void printMatrix(const std::vector<std::vector<float>>& M, const std::string& name = "");
+void printMatrix(const std::vector<std::vector<float>>& M, const std::string& name = "", std::optional<int> cap = std::nullopt);

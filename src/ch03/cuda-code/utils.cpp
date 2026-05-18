@@ -1,5 +1,6 @@
 #include "utils.hpp"
 #include <cassert>
+#include <iomanip>
 #include <optional>
 #include <stdexcept>
 #include <iostream>
@@ -36,12 +37,33 @@ void printVec(const float* V, int n, std::optional<int> cap) {
     printf("]\n");
 }
 
-// void printMatrix(const std::vector<std::vector<float>>& M, const std::string& name = "") {
-//     if (!name.empty())
-//         std::cout << name << " [" << M.size() << "x" << M[0].size() << "]:\n";
-//     for (const auto& row : M) {
-//         for (const auto& val : row)
-//             std::cout << std::setw(8) << std::setprecision(3) << std::fixed << val << " ";
-//         std::cout << "\n";
-//     }
-// }
+void printMatrix(const std::vector<std::vector<float>>& M, const std::string& name, std::optional<int> cap) {
+    int totalRows = M.size();
+    int totalCols = M[0].size();
+
+    assert(!cap || (*cap <= totalRows && *cap <= totalCols));
+
+    if (!name.empty())
+        std::cout << name << " [" << totalRows << "x" << totalCols << "]:\n";
+
+    auto printRow = [&](int i) {
+        int cols = cap.value_or(totalCols);
+        for (int j = 0; j < cols; j++)
+            std::cout << std::setw(8) << std::setprecision(3) << std::fixed << M[i][j] << " ";
+        if (cap) {
+            std::cout << "   ...";
+            std::cout << std::setw(8) << std::setprecision(3) << std::fixed << M[i][totalCols - 1];
+        }
+        std::cout << "\n";
+    };
+
+    if (!cap) {
+        for (int i = 0; i < totalRows; i++)
+            printRow(i);
+    } else {
+        for (int i = 0; i < *cap; i++)
+            printRow(i);
+        std::cout << "   ⋮\n";
+        printRow(totalRows - 1);
+    }
+}
