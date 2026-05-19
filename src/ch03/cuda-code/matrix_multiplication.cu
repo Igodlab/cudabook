@@ -25,7 +25,7 @@ __global__ void MatrixMulKernel(
 
 int main(void) {
   // Square matrices dim (j,i)=(n,m)
-  int m = 10;
+  int m = 1000;
   int n = m;
 
   std::vector<float> M(m * n);
