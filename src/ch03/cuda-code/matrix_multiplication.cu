@@ -24,10 +24,11 @@ __global__ void MatrixMulKernel(
 }
 
 int main(void) {
-  // Square matrices dim (j,i)=(n,m)
+  // Matrices dim: m rows (i iterates over rows), n cols (j iterates over cols)
   int m = 1000;
   int n = m;
 
+  // Iniitialize matrices as flat vectors
   std::vector<float> M(m * n);
   std::vector<float> N(m * n);
   std::vector<float> P(m * n);
