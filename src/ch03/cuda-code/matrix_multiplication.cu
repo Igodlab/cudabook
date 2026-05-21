@@ -37,8 +37,7 @@ int main(void) {
   float u_min = -10.0f;
   float u_max = 10.0f;
 
-  std::random_device rd;
-  std::mt19937 rng(rd());
+  std::mt19937 rng(42);
   std::uniform_real_distribution<float> uniform_dist(u_min, u_max);
 
   // populate M, N using row-major indexing

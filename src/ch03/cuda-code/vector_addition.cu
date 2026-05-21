@@ -53,8 +53,7 @@ int main(void) {
 
   // Initialize inputs, ouputs and populate A, B w/ random values from uniform dist
   std::vector<float> A(n), B(n), C_cpu(n), C_gpu(n);
-  std::random_device rd;
-  std::mt19937 gen(rd());
+  std::mt19937 gen(42);
   std::uniform_real_distribution<float> uniform_dist(u_min, u_max);
 
   for (int ni = 0; ni < n; ni++) {
