@@ -1,8 +1,7 @@
-#include "utils.hpp"
-#include <cstdio>
 #include <cuda_runtime.h>
 #include <random>
 #include <vector>
+#include "utils.hpp"
 
 // A - write a kernel that has each thread produce one output matrix row
 __global__ void matmulRowKernel(
