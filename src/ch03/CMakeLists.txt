@@ -33,8 +33,8 @@ endfunction()
 # -----------------------------------------------------------------------
 # cuda-code targets — one line each
 # -----------------------------------------------------------------------
-add_ch03_exercise(vector_addition       cuda-code/vector_addition.cu)
-add_ch03_exercise(color_to_grey         cuda-code/color_to_grey.cu)
-add_ch03_exercise(image_blur            cuda-code/image_blur.cu)
-add_ch03_exercise(matrix_multiplication cuda-code/matrix_multiplication.cu)
-add_ch03_exercise(ex03_01 cuda-code/ex03_01.cu)
+add_ch03_exercise(ch03_vector_addition       cuda-code/vector_addition.cu)
+add_ch03_exercise(ch03_color_to_grey         cuda-code/color_to_grey.cu)
+add_ch03_exercise(ch03_image_blur            cuda-code/image_blur.cu)
+add_ch03_exercise(ch03_matrix_multiplication cuda-code/matrix_multiplication.cu)
+add_ch03_exercise(ch03_ex01 cuda-code/ch03_ex01.cu)
