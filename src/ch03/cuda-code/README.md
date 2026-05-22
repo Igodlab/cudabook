@@ -81,7 +81,10 @@ __global__ void matvecKernel(float* M, float* v, float* out, int rows, int cols)
 ### Exercise 3 — Grid and Block Dimension Analysis
 
 Given the following kernel and configuration execution parameters `bd(16,32)` & `gd(19,5)` (note that C/C++ drops the decimal part in integer division if no float is specified in `gd`), we have:
-*a)* 512 threads per block. *b)* $\text{threads\/block} \times (\text{gridDim.x} \times \text{gridDim.y})=48640$ threads in the grid. *c)* 95 grids. *d)* The threads that execute the code in line `05` are all the threads in the grid minus the excess threads, in other words the threads that meet the condition in line `04`. This is $(\text{gridDim.x}\times\text{blockDim.x})-M=304-300=4$
+- *a)* 512 threads per block
+- *b)* $\text{threads\/block} \times (\text{gridDim.x} \times \text{gridDim.y})=48640$ threads in the grid
+- *c)* 95 grids
+- *d)* The threads that execute the code in line `05` are $M\times N=45000$ (which means that ther is 3640 inactive threads)
 
 ```cuda
 __global__ void foo_kernel(float* a , float* b , unsigned int M, unsigned int N) {
@@ -102,15 +105,11 @@ void foo(float* a_d , float* b_d) {
 
 ### Exercise 4 — 2D Flat Indexing
 
-Given a 2D matrix stored as a flat vector, express element `(i, j)` in:
+Given a 2D matrix $M\in\mathbb{R}^{m\times n}$ stored as a flat vector, express element `M(i, j)` in:
 
-- **Row-major:** `A[i * n + j]`
-- **Column-major:** `A[j * m + i]`
+- **Row-major:** `M[i * n + j]`
+- **Column-major:** `M[j * m + i]`
 
 ### Exercise 5 — 3D Tensor Flat Indexing
 
-Given a 3D tensor of shape `(d, m, n)` stored flat in row-major order, element `(i, j, k)` is:
-
-```
-T[i * (m * n) + j * n + k]
-```
+Given a 3D tensor $T\in\mathbb{R}^{m\times n\times r}$ flattened in row-major order, element `(i, j, k)` is `T[i * n * r + j * r + k]`
