@@ -7,11 +7,11 @@
 
 | # | Name | Concepts illustrated |
 |---|------|----------------------|
-| Example 1 | [color_to_grey.cu](src/ch03/cuda-code/color_to_grey.cu) | Grid/block model, boundary conditions, per-thread pixel mapping |
-| Example 2 | [image_blur.cu](src/ch03/cuda-code/image_blur.cu) | 2D grid indexing, neighborhood access, RGB stride convention |
-| Example 3 | [matrix_multiplication.cu](src/ch03/cuda-code/matrix_multiplication.cu) | One output element per thread, row-major indexing, BLAS fundamentals |
-| Exercise 1 | [ch03_ex01.cu](src/ch03/cuda-code/ch03_ex01.cu) | Row/Column Matmul Variants. One output row or column per thread, coalescing tradeoffs |
-| Exercise 2 | [ch03_ex02.cu](src/ch03/cuda-code/ch03_ex02.cu) | Matrix-Vector Multiplication. Dot product per thread, 1D grid design |
+| Example 1 | [color_to_grey.cu](/color_to_grey.cu) | Grid/block model, boundary conditions, per-thread pixel mapping |
+| Example 2 | [image_blur.cu](/image_blur.cu) | 2D grid indexing, neighborhood access, RGB stride convention |
+| Example 3 | [matrix_multiplication.cu](/matrix_multiplication.cu) | One output element per thread, row-major indexing, BLAS fundamentals |
+| Exercise 1 | [ch03_ex01.cu](/ch03_ex01.cu) | Row/Column Matmul Variants. One output row or column per thread, coalescing tradeoffs |
+| Exercise 2 | [ch03_ex02.cu](/ch03_ex02.cu) | Matrix-Vector Multiplication. Dot product per thread, 1D grid design |
 | Exercise 3 | Grid and Block Dimensions | Interpreting launch configs, counting total threads |
 | Exercise 4 | 2D Flat Indexing | Row-major vs column-major element addressing |
 | Exercise 5 | 3D Tensor Flat Indexing | Row-major addressing for rank-3 tensors |
