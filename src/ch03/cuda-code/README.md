@@ -62,19 +62,10 @@ __global__ void matmulKernel(
 
 ### Exercise 1 — Row and Column Matmul Variants
 
-Two kernel variants for matrix multiplication where M ∈ R^{m×k} and N ∈ R^{k×n}:
+Two kernel variants for matrix multiplication where $M\in\mathbb{R}^{m\times k}$ and $N \in \mathbb{R}^{k\times n}$:
 
 - **1.a** — one thread computes an entire output row-vector
 - **1.b** — one thread computes an entire output column-vector
-
-**Pros/cons analysis:**
-
-| | Row kernel | Column kernel |
-|---|---|---|
-| M access | coalesced | strided |
-| N access | strided | coalesced |
-| Grid | 1D over m | 1D over n |
-| Work per thread | n*k ops | m*k ops |
 
 Neither is optimal. Both carry one uncoalesced access pattern. The tiled shared memory
 approach (ch. 5) resolves this.
@@ -95,7 +86,25 @@ __global__ void matvecKernel(float* M, float* v, float* out, int rows, int cols)
 
 ### Exercise 3 — Grid and Block Dimension Analysis
 
-Given a kernel launch configuration, determine:
+Given the following kernel, determine:
+
+```cuda
+__global__ void foo_kernel(float* a , float* b , unsigned int M,
+    unsigned int N) {
+    unsigned int row = blockIdx.y*blockDim.y + threadIdx.y;
+    unsigned int col = blockIdx.x*blockDim.x + threadIdx.x;
+    if(row < M && col < N) {
+        b[row*N + col] = a[row*N + col]/2.1f + 4.8f;
+    }
+}
+void foo(float* a_d , float* b_d) {
+    unsigned int M = 150;
+    unsigned int N = 300;
+    dim3 bd(16 , 32);
+    dim3 gd((N - 1)/16 + 1 , (M - 1)/32 + 1);
+    foo_kernel <<<gd, bd>>>(a_d , b_d , M , N);
+}
+```
 
 - `gridDim`, `blockDim` values
 - total number of threads launched
@@ -114,22 +123,4 @@ Given a 3D tensor of shape `(d, m, n)` stored flat in row-major order, element `
 
 ```
 T[i * (m * n) + j * n + k]
-```
-
-```cuda
-__global__ void foo_kernel(float* a , float* b , unsigned int M,
-    unsigned int N) {
-    unsigned int row = blockIdx.y*blockDim.y + threadIdx.y;
-    unsigned int col = blockIdx.x*blockDim.x + threadIdx.x;
-    if(row < M && col < N) {
-        b[row*N + col] = a[row*N + col]/2.1f + 4.8f;
-    }
-}
-void foo(float* a_d , float* b_d) {
-    unsigned int M = 150;
-    unsigned int N = 300;
-    dim3 bd(16 , 32);
-    dim3 gd((N - 1)/16 + 1 , (M - 1)/32 + 1);
-    foo_kernel <<<gd, bd>>>(a_d , b_d , M , N);
-}
 ```
