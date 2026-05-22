@@ -80,7 +80,7 @@ __global__ void matvecKernel(float* M, float* v, float* out, int rows, int cols)
 
 ### Exercise 3 — Grid and Block Dimension Analysis
 
-Given the following kernel and configuration execution parameters, we have: *a)* 512 threads per block. *b)* $\texttt{thread\/block} \times (\texttt{gridDim.x} \times \texttt{gridDim.y} \times \texttt{gridDim.z}=48640$ threads in the grid. *c)* 120 grids. *d)* each single thread executes the code on line `05`
+Given the following kernel and configuration execution parameters, we have: *a)* 512 threads per block. *b)* threads/block x (gridDim.x x gridDim.y x gridDim.z)=48640 threads in the grid. *c)* 95 grids. *d)* each single thread executes the code on line `05`
 
 ```cuda
 __global__ void foo_kernel(float* a , float* b , unsigned int M, unsigned int N) {
