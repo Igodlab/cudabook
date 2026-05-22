@@ -22,9 +22,7 @@
 
 ### Color to Greyscale
 
-Kernel that shows how to get started with the grids and blocks GPU model using an example of
-converting a color image to greyscale. Introduces boundary conditions to account for excess
-threads larger than image pixels.
+Kernel that shows how to get started with the grids and blocks GPU model using an example of converting a color image to greyscale. Introduces boundary conditions to account for excess threads larger than image pixels.
 
 ```cuda
 __global__ void colorToGreyscaleKernel(
@@ -35,8 +33,7 @@ __global__ void colorToGreyscaleKernel(
 
 ### Image Blur
 
-A more complex kernel that operates on an RGB color image using a 3-strided flat vector
-(row-major convention). Each thread computes one output pixel by averaging its neighborhood.
+A more complex kernel that operates on an RGB color image using a 3-strided flat vector (row-major convention). Each thread computes one output pixel by averaging its neighborhood.
 
 ```cuda
 __global__ void imageBlurKernel(
@@ -47,8 +44,7 @@ __global__ void imageBlurKernel(
 
 ### Matrix Multiplication
 
-Fundamental BLAS example. One output matrix element per thread. Each thread computes the
-dot product of one row of M and one column of N.
+Fundamental BLAS example. One output matrix element per thread. Each thread computes the dot product of one row of M and one column of N.
 
 ```cuda
 __global__ void matmulKernel(
@@ -67,8 +63,7 @@ Two kernel variants for matrix multiplication where $M\in\mathbb{R}^{m\times k}$
 - **1.a** — one thread computes an entire output row-vector
 - **1.b** — one thread computes an entire output column-vector
 
-Neither is optimal. Both carry one uncoalesced access pattern. The tiled shared memory
-approach (ch. 5) resolves this.
+Neither is optimal. Both carry one uncoalesced access pattern. The tiled shared memory approach (ch. 5) resolves this.
 
 ```cuda
 __global__ void matmulRowKernel(float* M, float* N, float* A, int m, int k, int n) { ... }
@@ -77,8 +72,7 @@ __global__ void matmulColKernel(float* M, float* N, float* B, int m, int k, int 
 
 ### Exercise 2 — Matrix-Vector Multiplication
 
-Kernel where each thread computes one full dot product between a matrix row and the input
-vector. Grid is 1D over the number of matrix rows.
+Kernel where each thread computes one full dot product between a matrix row and the input vector. Grid is 1D over the number of matrix rows.
 
 ```cuda
 __global__ void matvecKernel(float* M, float* v, float* out, int rows, int cols) { ... }
@@ -86,11 +80,10 @@ __global__ void matvecKernel(float* M, float* v, float* out, int rows, int cols)
 
 ### Exercise 3 — Grid and Block Dimension Analysis
 
-Given the following kernel, determine:
+Given the following kernel and configuration execution parameters, we have: *a)* 512 threads per block. *b)* $\texttt{thread\/block} \times (\texttt{gridDim.x} \times \texttt{gridDim.y} \times \texttt{gridDim.z}=48640$ threads in the grid. *c)* 120 grids. *d)* each single thread executes the code on line `05`
 
 ```cuda
-__global__ void foo_kernel(float* a , float* b , unsigned int M,
-    unsigned int N) {
+__global__ void foo_kernel(float* a , float* b , unsigned int M, unsigned int N) {
     unsigned int row = blockIdx.y*blockDim.y + threadIdx.y;
     unsigned int col = blockIdx.x*blockDim.x + threadIdx.x;
     if(row < M && col < N) {
@@ -105,10 +98,6 @@ void foo(float* a_d , float* b_d) {
     foo_kernel <<<gd, bd>>>(a_d , b_d , M , N);
 }
 ```
-
-- `gridDim`, `blockDim` values
-- total number of threads launched
-- which threads are active vs idle (boundary padding)
 
 ### Exercise 4 — 2D Flat Indexing
 
