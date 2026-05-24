@@ -12,9 +12,9 @@
 | Example 3 | [Matrix multiplication](#matrix-multiplication) | One output element per thread, row-major indexing, BLAS fundamentals |
 | Exercise 1 | [Row/Column matmul variants](#exercise-1) | One output row or column per thread, coalescing tradeoffs |
 | Exercise 2 | [Matrix-vector multiplication](#exercise-2) | Dot product per thread, 1D grid design |
-| Exercise 3 | [Grid and block dimensions](#exercise3) | Interpreting launch configs, counting total threads |
-| Exercise 4 | [2D flat indexing](#exercise4) | Row-major vs column-major element addressing |
-| Exercise 5 | [3D flat indexing](#exercise5) | Row-major addressing for rank-3 tensors |
+| Exercise 3 | [Grid and block dimensions](#exercise-3) | Interpreting launch configs, counting total threads |
+| Exercise 4 | [2D flat indexing](#exercise-4) | Row-major vs column-major element addressing |
+| Exercise 5 | [3D flat indexing](#exercise-5) | Row-major addressing for rank-3 tensors |
 
 ---
 
