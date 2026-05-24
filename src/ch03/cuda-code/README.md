@@ -20,9 +20,9 @@
 
 ## Book Examples
 
-### Color to greyscale ([color_to_grey.cu](color_to_grey.cu))
+### Color to greyscale 
 
-Kernel that shows how to get started with the grids and blocks GPU model using an example of converting a color image to greyscale. Introduces boundary conditions to account for excess threads larger than image pixels.
+[color_to_grey.cu](color_to_grey.cu) shows how to get started with the grids and blocks GPU model using an example of converting a color image to greyscale. Introduces boundary conditions to account for excess threads larger than image pixels.
 
 ```cuda
 __global__ void coloToGrayscaleConvertion(
@@ -55,7 +55,7 @@ __global__ void coloToGrayscaleConvertion(
 
 ### Image blur
 
-A more complex kernel that operates on an RGB color image using a 3-strided flat vector (row-major convention). Each thread computes one output pixel by averaging its neighborhood.
+[image_blur.cu](image_blur.cu) shows a complex kernel that operates on an RGB color image using a 3-strided flat vector (row-major convention). Each thread computes one output pixel by averaging its neighborhood.
 
 ```cuda
 __global__ void imageBlur(
@@ -89,9 +89,9 @@ __global__ void imageBlur(
 }
 ```
 
-### Matrix multiplication ([matrix_multiplication.cu](matrix_multiplication.cu))
+### Matrix multiplication 
 
-Fundamental BLAS example. One output matrix element per thread. Each thread computes the dot product of one row of M and one column of N.
+[matrix_multiplication.cu](matrix_multiplication.cu) is the fundamental BLAS example, one output matrix element per thread. Each thread computes the dot product of one row of M and one column of N.
 
 ```cuda
 __global__ void MatrixMulKernel(
