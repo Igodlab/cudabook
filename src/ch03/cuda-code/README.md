@@ -129,15 +129,76 @@ __global__ void MatrixMulKernel(
 Neither is optimal. Both carry one uncoalesced access pattern. The tiled shared memory approach (ch. 5) resolves this.
 
 ```cuda
-__global__ void matmulRowKernel(float* M, float* N, float* A, int m, int k, int n) { ... }
-__global__ void matmulColKernel(float* M, float* N, float* B, int m, int k, int n) { ... }
+// A - write a kernel that has each thread produce one output matrix row
+__global__ void matmulRowKernel(
+    float* M, // \in R^{m x k}
+    float* N, // \in R^{k x n}
+    float* A, // \in R^{m x n}
+    int m,
+    int k,
+    int n)
+{
+  int row = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (row < m) {
+    // Compute output row-vector A[row,:]
+    // populate all j-th (\in n) elements of row-vector A[row,j] = \sum_{k_th}^k M[row,k_th] * N[k_th,j]
+    for (int Nj = 0; Nj < n; ++Nj) {
+      float acc = 0.0f;
+      for (int k_th = 0; k_th < k; ++k_th) {
+        acc += M[row * k + k_th] * N[k_th * n + Nj];
+      }
+      A[row * n + Nj] = acc;
+    }
+  }
+}
+
+// B - write a kernel that has each thread produce one output matrix column
+__global__ void matmulColKernel(
+    float* M,
+    float* N,
+    float* B,
+    int m,
+    int k,
+    int n)
+{
+  int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (col < n) {
+    // Compute output col-vector A[row,:]
+    // populate all i-th (\in m) elements of col-vector A[i,col] = \sum_{k_th}^k M[i,k_th] * N[k_th,col]
+    for (int Mi = 0; Mi < m; ++Mi) {
+      float acc = 0.0f;
+      for (int k_th = 0; k_th < k; ++k_th){
+        acc += M[Mi * k + k_th] * N[k_th * n + col];
+      }
+      // Populate Mi-th element of column-vector B[:,col]
+      B[Mi * n + col] = acc;
+    }
+  }
+}
 ```
 
 ### Exercise 2
-[ch03_ex02.cu](ch03_ex02.cu) kernel where each thread computes one full dot product between a matrix row and the input vector. Grid is 1D over the number of matrix rows.
+[ch03_ex02.cu](ch03_ex02.cu) kernel where each thread computes one full dot product between a square matrix row `B[row,:]` and the input vector `c`. Grid is 1D over the number of matrix rows.
 
 ```cuda
-__global__ void matvecKernel(float* M, float* v, float* out, int rows, int cols) { ... }
+__global__ void matVecKernel(
+    float* B,
+    float* c,
+    float* a,
+    int n)
+{
+  int row = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (row < n) {
+    float acc = 0.0f;
+    for (int j = 0; j < n; ++j) {
+      acc += B[row * n + j] * c[j];
+    }
+    a[row] = acc;
+  }
+}
 ```
 
 ### Exercise 3
