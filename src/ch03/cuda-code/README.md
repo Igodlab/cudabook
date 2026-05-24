@@ -124,9 +124,8 @@ __global__ void MatrixMulKernel(
 [ch03_ex01.cu](ch03_ex01.cu) shows two kernel variants for matrix multiplication where $M\in\mathbb{R}^{m\times k}$ and $N \in \mathbb{R}^{k\times n}$:
 
 - **1.a** — one thread computes an entire output row-vector `A[row,:]` $\leftarrow \left[\sum_{k_{th}}^k M_{\text{row},k_{th}}N_{k_{th},0}, \ldots, \sum_{k_{th}}^k M_{\text{row},k_{th}}N_{k_{th},n-1}\right]$
-- **1.b** — one thread computes an entire output column-vector `B[:,col]` $\leftarrow \left[\sum_{k_{th}}^k M_{0,k_{th}}N_{k_{th},\text{col}}, \ldots, \sum_{k_{th}}^k M_{m-1,k_{th}}N_{k_{th},\text{col}}\right]$
-
-Neither is optimal. Both carry one uncoalesced access pattern. The tiled shared memory approach (ch. 5) resolves this.
+- **1.b** — one thread computes an entire output column-vector `B[:,col]` $\leftarrow \left[\sum_{k_{th}}^k M_{0,k_{th}}N_{k_{th},\text{col}}, \ldots, \sum_{k_{th}}^k M_{m-1,k_{th}}N_{k_{th},\text{col}}\right]^T$
+- **1.c** - Neither is optimal. Both carry one uncoalesced access pattern. The tiled shared memory approach (ch. 5) resolves this.
 
 ```cuda
 // A - write a kernel that has each thread produce one output matrix row
