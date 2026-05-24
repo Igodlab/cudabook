@@ -7,11 +7,11 @@
 
 | # | Name | Concepts illustrated |
 |---|------|----------------------|
-| Example 1 | [color_to_grey.cu](color_to_grey.cu) | Grid/block model, boundary conditions, per-thread pixel mapping |
-| Example 2 | [image_blur.cu](image_blur.cu) | 2D grid indexing, neighborhood access, RGB stride convention |
-| Example 3 | [matrix_multiplication.cu](matrix_multiplication.cu) | One output element per thread, row-major indexing, BLAS fundamentals |
-| Exercise 1 | [ch03_ex01.cu](ch03_ex01.cu) | Row/Column Matmul Variants. One output row or column per thread, coalescing tradeoffs |
-| Exercise 2 | [ch03_ex02.cu](ch03_ex02.cu) | Matrix-Vector Multiplication. Dot product per thread, 1D grid design |
+| Example 1 | [Color to greysclae](cuda-code#color-to-greyscale) | Grid/block model, boundary conditions, per-thread pixel mapping |
+| Example 2 | [Image blur](image_blur.cu) | 2D grid indexing, neighborhood access, RGB stride convention |
+| Example 3 | [Matrix Multiplication](matrix_multiplication.cu) | One output element per thread, row-major indexing, BLAS fundamentals |
+| Exercise 1 | [Row/Column matmul variants](ch03_ex01.cu) | One output row or column per thread, coalescing tradeoffs |
+| Exercise 2 | [Matrix-vector multiplication](ch03_ex02.cu) | Dot product per thread, 1D grid design |
 | Exercise 3 | Grid and Block Dimensions | Interpreting launch configs, counting total threads |
 | Exercise 4 | 2D Flat Indexing | Row-major vs column-major element addressing |
 | Exercise 5 | 3D Tensor Flat Indexing | Row-major addressing for rank-3 tensors |
@@ -20,15 +20,38 @@
 
 ## Book Examples
 
-### Color to Greyscale
+### Color to greyscale ([color_to_grey.cu](color_to_grey.cu))
 
 Kernel that shows how to get started with the grids and blocks GPU model using an example of converting a color image to greyscale. Introduces boundary conditions to account for excess threads larger than image pixels.
 
 ```cuda
-__global__ void colorToGreyscaleKernel(
-    unsigned char* Pout,
-    unsigned char* Pin,
-    int width, int height) { ... }
+__global__
+void coloToGrayscaleConvertion(
+    unsigned char *Pout,
+    unsigned char *Pin,
+    int width,
+    int height) 
+{
+  int col = blockIdx.x * blockDim.x + threadIdx.x;
+  int row = blockIdx.y * blockDim.y + threadIdx.y;
+
+  if (col < width && row < height) {
+    // Get 1D offset for the greyscale output
+    int grayOffset = row * width + col;
+
+    // Input has 3x more dimensions due to rgb color channels
+    int rgbOffset = grayOffset * CHANNELS;
+
+    // Each pixel requires three bytes (one for each color channel)
+    // OpenCV reads images as bgr so we need to account for that
+    unsigned char b = Pin[rgbOffset];     // blue
+    unsigned char g = Pin[rgbOffset + 1]; // green
+    unsigned char r = Pin[rgbOffset + 2]; // red
+
+    // Compute greys
+    Pout[grayOffset] = 0.299*r + 0.587*g + 0.114*b;
+  }
+}
 ```
 
 ### Image Blur
@@ -84,7 +107,7 @@ Given the following kernel and configuration execution parameters `bd(16,32)` & 
 - *a)* 512 threads per block
 - *b)* $\text{threads\/block} \times (\text{gridDim.x} \times \text{gridDim.y})=48640$ threads in the grid
 - *c)* 95 grids
-- *d)* The threads that execute the code in line `05` are $M\times N=45000$ (which means that ther is 3640 inactive threads)
+- *d)* The threads that execute the code in line `05` are $M\times N=45000$ (which means that there is 3640 inactive threads)
 
 ```cuda
 __global__ void foo_kernel(float* a , float* b , unsigned int M, unsigned int N) {
@@ -105,11 +128,11 @@ void foo(float* a_d , float* b_d) {
 
 ### Exercise 4 — 2D Flat Indexing
 
-Given a 2D matrix $M\in\mathbb{R}^{m\times n}$ stored as a flat vector, express element `M(i, j)` in:
+Given a 2D matrix $M\in\mathbb{R}^{m\times n}$ stored as a flat vector, express element `M[i, j]` in:
 
 - **Row-major:** `M[i * n + j]`
 - **Column-major:** `M[j * m + i]`
 
 ### Exercise 5 — 3D Tensor Flat Indexing
 
-Given a 3D tensor $T\in\mathbb{R}^{m\times n\times r}$ flattened in row-major order, element `(i, j, k)` is `T[i * n * r + j * r + k]`
+Given a 3D tensor $T\in\mathbb{R}^{m\times n\times r}$ flattened in row-major order, element `T[i, j, k]` is `T[i * n * r + j * r + k]`
