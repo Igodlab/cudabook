@@ -18,7 +18,7 @@ void imageBlur(
   int channel = threadIdx.z; // (b,g,r)=(0,1,2)
 
   if (col < width && row < height) {
-    int pixelValues = 0;
+    int acc = 0;
     int pixels = 0;
 
     for (int blurRow = -blur_radii; blurRow < blur_radii + 1; ++blurRow) {
@@ -27,12 +27,12 @@ void imageBlur(
         int currRow = row + blurRow;
 
         if (currCol >= 0 && currCol < width && currRow >= 0 && currRow < height) {
-          pixelValues += Pin[(currRow * width + currCol) * CHANNELS + channel];
+          acc += Pin[(currRow * width + currCol) * CHANNELS + channel];
           ++pixels;
         }
       }
     }
-    Pout[(row * width + col) * CHANNELS + channel] = (unsigned char)(pixelValues / pixels);
+    Pout[(row * width + col) * CHANNELS + channel] = (unsigned char)(acc / pixels);
   }
 }
 

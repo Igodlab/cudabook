@@ -7,14 +7,14 @@
 
 | # | Name | Concepts illustrated |
 |---|------|----------------------|
-| Example 1 | [Color to greysclae](cuda-code#color-to-greyscale) | Grid/block model, boundary conditions, per-thread pixel mapping |
-| Example 2 | [Image blur](image_blur.cu) | 2D grid indexing, neighborhood access, RGB stride convention |
-| Example 3 | [Matrix Multiplication](matrix_multiplication.cu) | One output element per thread, row-major indexing, BLAS fundamentals |
-| Exercise 1 | [Row/Column matmul variants](ch03_ex01.cu) | One output row or column per thread, coalescing tradeoffs |
-| Exercise 2 | [Matrix-vector multiplication](ch03_ex02.cu) | Dot product per thread, 1D grid design |
-| Exercise 3 | Grid and Block Dimensions | Interpreting launch configs, counting total threads |
-| Exercise 4 | 2D Flat Indexing | Row-major vs column-major element addressing |
-| Exercise 5 | 3D Tensor Flat Indexing | Row-major addressing for rank-3 tensors |
+| Example 1 | [Color to greysclae](#color-to-greyscale) | Grid/block model, boundary conditions, per-thread pixel mapping |
+| Example 2 | [Image blur](#image-blur) | 2D grid indexing, neighborhood access, RGB stride convention |
+| Example 3 | [Matrix multiplication](#matrix-multiplication) | One output element per thread, row-major indexing, BLAS fundamentals |
+| Exercise 1 | [Row/Column matmul variants](#exercise-1) | One output row or column per thread, coalescing tradeoffs |
+| Exercise 2 | [Matrix-vector multiplication](#exercise-2) | Dot product per thread, 1D grid design |
+| Exercise 3 | [Grid and block dimensions](#exercise3) | Interpreting launch configs, counting total threads |
+| Exercise 4 | [2D flat indexing](#exercise4) | Row-major vs column-major element addressing |
+| Exercise 5 | [3D flat indexing](#exercise5) | Row-major addressing for rank-3 tensors |
 
 ---
 
@@ -25,8 +25,7 @@
 Kernel that shows how to get started with the grids and blocks GPU model using an example of converting a color image to greyscale. Introduces boundary conditions to account for excess threads larger than image pixels.
 
 ```cuda
-__global__
-void coloToGrayscaleConvertion(
+__global__ void coloToGrayscaleConvertion(
     unsigned char *Pout,
     unsigned char *Pin,
     int width,
@@ -54,37 +53,78 @@ void coloToGrayscaleConvertion(
 }
 ```
 
-### Image Blur
+### Image blur
 
 A more complex kernel that operates on an RGB color image using a 3-strided flat vector (row-major convention). Each thread computes one output pixel by averaging its neighborhood.
 
 ```cuda
-__global__ void imageBlurKernel(
-    unsigned char* Pout,
+__global__ void imageBlur(
     unsigned char* Pin,
-    int width, int height) { ... }
+    unsigned char* Pout,
+    int width,
+    int height,
+    int blur_radii) 
+{
+  int col = blockIdx.x * blockDim.x + threadIdx.x;
+  int row = blockIdx.y * blockDim.y + threadIdx.y;
+  int channel = threadIdx.z; // (b,g,r)=(0,1,2)
+
+  if (col < width && row < height) {
+    int acc = 0;
+    int pixels = 0;
+
+    for (int blurRow = -blur_radii; blurRow < blur_radii + 1; ++blurRow) {
+      for (int blurCol = -blur_radii; blurCol < blur_radii + 1; ++blurCol) {
+        int currCol = col + blurCol;
+        int currRow = row + blurRow;
+
+        if (currCol >= 0 && currCol < width && currRow >= 0 && currRow < height) {
+          acc += Pin[(currRow * width + currCol) * CHANNELS + channel];
+          ++pixels;
+        }
+      }
+    }
+    Pout[(row * width + col) * CHANNELS + channel] = (unsigned char)(acc / pixels);
+  }
+}
 ```
 
-### Matrix Multiplication
+### Matrix multiplication ([matrix_multiplication.cu](matrix_multiplication.cu))
 
 Fundamental BLAS example. One output matrix element per thread. Each thread computes the dot product of one row of M and one column of N.
 
 ```cuda
-__global__ void matmulKernel(
-    float* M, float* N, float* A,
-    int m, int k, int n) { ... }
+__global__ void MatrixMulKernel(
+    float* M,
+    float* N,
+    float* P,
+    int height,
+    int width)
+{
+  int col = blockIdx.x * blockDim.x + threadIdx.x;
+  int row = blockIdx.y * blockDim.y + threadIdx.y;
+
+  if (col < width && row < height) {
+    float acc = 0;
+    // Compute P[i,j] = \sum_k M[i,k] * N[k,j]
+    for (int k = 0; k < width; ++k) {
+      acc += M[row*width+k] * N[k*width+col];
+    }
+    P[row*width+col] = acc;
+  }
+}
 ```
 
 ---
 
 ## Exercises
 
-### Exercise 1 — Row and Column Matmul Variants
+### Exercise 1 — Row and column matmul variants 
 
-Two kernel variants for matrix multiplication where $M\in\mathbb{R}^{m\times k}$ and $N \in \mathbb{R}^{k\times n}$:
+[ch03_ex01.cu](ch03_ex01.cu) shows two kernel variants for matrix multiplication where $M\in\mathbb{R}^{m\times k}$ and $N \in \mathbb{R}^{k\times n}$:
 
-- **1.a** — one thread computes an entire output row-vector
-- **1.b** — one thread computes an entire output column-vector
+- **1.a** — one thread computes an entire output row-vector `A[row,:]` $\leftarrow \left[\sum_{k_{th}}^k M_{\text{row},k_{th}}N_{k_{th},0}, \ldots, \sum_{k_{th}}^k M_{\text{row},k_{th}}N_{k_{th},n-1}\right]$
+- **1.b** — one thread computes an entire output column-vector `B[:,col]` $\leftarrow \left[\sum_{k_{th}}^k M_{0,k_{th}}N_{k_{th},\text{col}}, \ldots, \sum_{k_{th}}^k M_{m-1,k_{th}}N_{k_{th},\text{col}}\right]$
 
 Neither is optimal. Both carry one uncoalesced access pattern. The tiled shared memory approach (ch. 5) resolves this.
 
@@ -93,15 +133,14 @@ __global__ void matmulRowKernel(float* M, float* N, float* A, int m, int k, int 
 __global__ void matmulColKernel(float* M, float* N, float* B, int m, int k, int n) { ... }
 ```
 
-### Exercise 2 — Matrix-Vector Multiplication
-
-Kernel where each thread computes one full dot product between a matrix row and the input vector. Grid is 1D over the number of matrix rows.
+### Exercise 2 
+[ch03_ex02.cu](ch03_ex02.cu) kernel where each thread computes one full dot product between a matrix row and the input vector. Grid is 1D over the number of matrix rows.
 
 ```cuda
 __global__ void matvecKernel(float* M, float* v, float* out, int rows, int cols) { ... }
 ```
 
-### Exercise 3 — Grid and Block Dimension Analysis
+### Exercise 3
 
 Given the following kernel and configuration execution parameters `bd(16,32)` & `gd(19,5)` (note that C/C++ drops the decimal part in integer division if no float is specified in `gd`), we have:
 - *a)* 512 threads per block
@@ -126,13 +165,13 @@ void foo(float* a_d , float* b_d) {
 }
 ```
 
-### Exercise 4 — 2D Flat Indexing
+### Exercise 4
 
 Given a 2D matrix $M\in\mathbb{R}^{m\times n}$ stored as a flat vector, express element `M[i, j]` in:
 
 - **Row-major:** `M[i * n + j]`
 - **Column-major:** `M[j * m + i]`
 
-### Exercise 5 — 3D Tensor Flat Indexing
+### Exercise 5
 
 Given a 3D tensor $T\in\mathbb{R}^{m\times n\times r}$ flattened in row-major order, element `T[i, j, k]` is `T[i * n * r + j * r + k]`
