@@ -14,12 +14,12 @@ __global__ void MatrixMulKernel(
   int row = blockIdx.y * blockDim.y + threadIdx.y;
 
   if (col < width && row < height) {
-    float Pval = 0;
+    float acc = 0;
     // Compute P[i,j] = \sum_k M[i,k] * N[k,j]
     for (int k = 0; k < width; ++k) {
-      Pval += M[row*width+k] * N[k*width+col];
+      acc += M[row*width+k] * N[k*width+col];
     }
-    P[row*width+col] = Pval;
+    P[row*width+col] = acc;
   }
 }
 

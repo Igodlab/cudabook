@@ -119,7 +119,7 @@ __global__ void MatrixMulKernel(
 
 ## Exercises
 
-### Exercise 1 — Row and column matmul variants 
+### Exercise 1
 
 [ch03_ex01.cu](ch03_ex01.cu) shows two kernel variants for matrix multiplication where $M\in\mathbb{R}^{m\times k}$ and $N \in \mathbb{R}^{k\times n}$:
 
@@ -133,7 +133,7 @@ __global__ void matmulRowKernel(float* M, float* N, float* A, int m, int k, int 
 __global__ void matmulColKernel(float* M, float* N, float* B, int m, int k, int n) { ... }
 ```
 
-### Exercise 2 
+### Exercise 2
 [ch03_ex02.cu](ch03_ex02.cu) kernel where each thread computes one full dot product between a matrix row and the input vector. Grid is 1D over the number of matrix rows.
 
 ```cuda
