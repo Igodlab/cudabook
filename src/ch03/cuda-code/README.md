@@ -243,7 +243,8 @@ Given a 3D tensor $M\in\mathbb{R}^{m\times n\times l}$ in row-major order the le
 
 > [!IMPORTANT] CUDA indexing *code notation* is backwards to mathematical index notation
 > 
-> In mathematics tensor elements are indexed from *left-to-right* (larger-to-smaller stride) $T_{i,j,k}\xrightarrow[\text{flat}]\; T_{i\times (n\times r) + j\times r + k}$
+> In mathematics tensor elements $T_{i,j,k}$ are indexed from *left-to-right* (larger-to-smaller stride) in row-major as $T_{i\times (n\times r) + j\times r + k}$
+> 
 > Whereas in **CUDA code** indexes go from *right-to-left* (smaller-to-larger stride) `T[z][y][x]` is `T[z * m * n + y * n + x]`
 
 So the element `T[z=5][y=20][x=10]` of a $(\text{row, col, depth})=(m,n,l)=(500, 400, 300)$ tensor is accessed (in row-major) as `T[5*500*400 + 20*400 + 10] = T[1008010]`
