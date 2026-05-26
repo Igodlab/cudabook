@@ -121,13 +121,13 @@ __global__ void MatrixMulKernel(
 
 ### Exercise 1
 
-[ch03_ex01.cu](ch03_ex01.cu) shows two kernel variants for matrix multiplication where $M\in\mathbb{R}^{m\times k}$ and $N \in \mathbb{R}^{k\times n}$:
+[ch03_ex01.cu](ch03_ex01.cu) shows two kernel variants for matrix multiplication where $M\in\mathbb{R}^{m\times l}$ and $N \in \mathbb{R}^{l\times n}$:
 
-- **1.a** — one thread computes an entire output row-vector `A[row,:]` $\leftarrow \left[\sum_{k_{th}}^k M_{\text{row},k_{th}}N_{k_{th},0}, \ldots, \sum_{k_{th}}^k M_{\text{row},k_{th}}N_{k_{th},n-1}\right]$
-- **1.b** — one thread computes an entire output column-vector `B[:,col]` $\leftarrow \left[\sum_{k_{th}}^k M_{0,k_{th}}N_{k_{th},\text{col}}, \ldots, \sum_{k_{th}}^k M_{m-1,k_{th}}N_{k_{th},\text{col}}\right]^T$
-- **1.c** - Neither is optimal. Both carry one uncoalesced access pattern. The tiled shared memory approach (ch. 5) resolves this.
+- **1.a** — one thread computes an entire output row-vector `A[:][row]` $\leftarrow \left[\sum_k^{l-1} M_{\text{row},k}N_{k,0}, \ldots, \sum_k^{l-1} M_{\text{row},k}N_{k,n-1}\right]$
+- **1.b** — one thread computes an entire output column-vector `B[col][:]` $\leftarrow \left[\sum_k^{l-1} M_{0,k_{th}}N_{k_{th},\text{col}}, \ldots, \sum_{k_{th}}^{l-1} M_{m-1,k_{th}}N_{k_{th},\text{col}}\right]^T$
+- **1.c** - Neither is optimal. Both carry one uncoalesced access pattern. The tiled shared memory approach (Ch. 5) resolves this
 
-<img src="../../../images/ch03/ch03_ex01-sol.png" width="80%">
+<img src="../../../images/ch03/ch03_ex01-sol.png" width="100%">
 
 ```cuda
 // A - write a kernel that has each thread produce one output matrix row
@@ -143,7 +143,7 @@ __global__ void matmulRowKernel(
 
   if (row < m) {
     // Compute output row-vector A[row,:]
-    // populate all j-th (\in n) elements of row-vector A[row,j] = \sum_k^l M[row,k] * N[k,j]
+    // populate all j-th (\in n) elements of row-vector A[row,j] = \sum_k^{l-1} M[row,k] * N[k,j]
     for (int Nj = 0; Nj < n; ++Nj) {
       float acc = 0.0f;
       for (int k = 0; k < l; ++k) {
@@ -167,7 +167,7 @@ __global__ void matmulColKernel(
 
   if (col < n) {
     // Compute output col-vector B[:,col]
-    // populate all i-th (\in m) elements of col-vector B[i,col] = \sum_k^l M[i,k] * N[k,col]
+    // populate all i-th (\in m) elements of col-vector B[i,col] = \sum_k^{l-1} M[i,k] * N[k,col]
     for (int Mi = 0; Mi < m; ++Mi) {
       float acc = 0.0f;
       for (int k = 0; k < l; ++k){
@@ -229,11 +229,21 @@ void foo(float* a_d , float* b_d) {
 
 ### Exercise 4
 
-Given a 2D matrix $M\in\mathbb{R}^{m\times n}$ stored as a flat vector, express element `M[i, j]` in:
+Given a 2D matrix $M\in\mathbb{R}^{m\times n}$ stored as a flat vector, express element `M[j][i]` in:
 
 - **Row-major:** `M[i * n + j]`
 - **Column-major:** `M[j * m + i]`
 
 ### Exercise 5
 
-Given a 3D tensor $T\in\mathbb{R}^{m\times n\times r}$ flattened in row-major order, element `T[i, j, k]` is `T[i * n * r + j * r + k]`
+Given a 3D tensor $M\in\mathbb{R}^{m\times n\times l}$ in row-major order the leftmost index varies fastest, so the strides are:
+- $i$ (rows) has stride $n \times r$
+- $j$ (cols) has stride $r$
+- $k$ (depth) has stride $1$
+
+> [!Important] CUDA indexing *code notation* is backwards to mathematical index notation
+> 
+> In mathematics tensor elements are indexed from *left-to-right* (larger-to-smaller stride) $T_{i,j,k}\xrightarrow_{\text{flat}}T_{i\times (n\times r) + j\times r + k}$
+> Whereas in **CUDA code** indexes go from *right-to-left* (smaller-to-larger stride) `T[z][y][x]` is `T[z * m * n + y * n + x]`
+
+So the element `T[z=5][y=20][x=10]` of a $(\text{row, col, depth})=(m,n,l)=(500, 400, 300)$ tensor is accessed (in row-major) as `T[5*500*400 + 20*400 + 10] = T[1008010]`
