@@ -127,6 +127,8 @@ __global__ void MatrixMulKernel(
 - **1.b** — one thread computes an entire output column-vector `B[:,col]` $\leftarrow \left[\sum_{k_{th}}^k M_{0,k_{th}}N_{k_{th},\text{col}}, \ldots, \sum_{k_{th}}^k M_{m-1,k_{th}}N_{k_{th},\text{col}}\right]^T$
 - **1.c** - Neither is optimal. Both carry one uncoalesced access pattern. The tiled shared memory approach (ch. 5) resolves this.
 
+<img src="images/ch03/pmpp-prob1a-b-sol.png" width="80%">
+
 ```cuda
 // A - write a kernel that has each thread produce one output matrix row
 __global__ void matmulRowKernel(
