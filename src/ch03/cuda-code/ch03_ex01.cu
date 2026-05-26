@@ -5,22 +5,22 @@
 
 // A - write a kernel that has each thread produce one output matrix row
 __global__ void matmulRowKernel(
-    float* M, // \in R^{m x k}
-    float* N, // \in R^{k x n}
+    float* M, // \in R^{m x l}
+    float* N, // \in R^{l x n}
     float* A, // \in R^{m x n}
     int m,
-    int k,
+    int l,
     int n)
 {
   int row = blockIdx.x * blockDim.x + threadIdx.x;
 
   if (row < m) {
     // Compute output row-vector A[row,:]
-    // populate all j-th (\in n) elements of row-vector A[row,j] = \sum_{k_th}^k M[row,k_th] * N[k_th,j]
+    // populate all j-th (\in n) elements of row-vector A[row,j] = \sum_{k}^k M[row,k] * N[k,j]
     for (int Nj = 0; Nj < n; ++Nj) {
       float acc = 0.0f;
-      for (int k_th = 0; k_th < k; ++k_th) {
-        acc += M[row * k + k_th] * N[k_th * n + Nj];
+      for (int k = 0; k < l; ++k) {
+        acc += M[row * l + k] * N[k * n + Nj];
       }
       A[row * n + Nj] = acc;
     }
@@ -33,18 +33,18 @@ __global__ void matmulColKernel(
     float* N,
     float* B,
     int m,
-    int k,
+    int l,
     int n)
 {
   int col = blockIdx.x * blockDim.x + threadIdx.x;
 
   if (col < n) {
-    // Compute output col-vector A[row,:]
-    // populate all i-th (\in m) elements of col-vector A[i,col] = \sum_{k_th}^k M[i,k_th] * N[k_th,col]
+    // Compute output col-vector B[:,col]
+    // populate all i-th (\in m) elements of col-vector B[i,col] = \sum_k^l M[i,k] * N[k,col]
     for (int Mi = 0; Mi < m; ++Mi) {
       float acc = 0.0f;
-      for (int k_th = 0; k_th < k; ++k_th){
-        acc += M[Mi * k + k_th] * N[k_th * n + col];
+      for (int k = 0; k < l; ++k){
+        acc += M[Mi * l + k] * N[k * n + col];
       }
       // Populate Mi-th element of column-vector B[:,col]
       B[Mi * n + col] = acc;
@@ -55,11 +55,11 @@ __global__ void matmulColKernel(
 int main(void) {
   // Matrices dim: i iterates over rows (height), j iterates over cols (width)
   int m = 3000;
-  int k = 4000;
+  int l = 4000;
   int n = 5000;
 
-  std::vector<float> M(m * k);
-  std::vector<float> N(k * n);
+  std::vector<float> M(m * l);
+  std::vector<float> N(l * n);
   std::vector<float> A(m * n);
   std::vector<float> B(m * n);
 
@@ -71,23 +71,23 @@ int main(void) {
 
   // populate M, N 
   for (int i = 0; i < m; ++i) {
-    for (int k_th = 0; k_th < k; ++k_th) {
-      M[i * k + k_th] = uniform_dist(rng);
+    for (int k = 0; k < l; ++k) {
+      M[i * k + k] = uniform_dist(rng);
     }
   }
-  for (int k_th = 0; k_th < k; ++k_th) {
+  for (int k = 0; k < l; ++k) {
     for (int j = 0; j < n; ++j) {
-      N[k_th * n + j] = uniform_dist(rng);
+      N[k * n + j] = uniform_dist(rng);
     }
   }
 
-  printMatrixFlat(M, m, k, "M", 3);
-  printMatrixFlat(N, k, n, "N", 3);
+  printMatrixFlat(M, m, l, "M", 3);
+  printMatrixFlat(N, l, n, "N", 3);
 
   // GPU prep
   float *M_d, *N_d, *A_d, *B_d;
-  size_t MByteSize = m * k * sizeof(float);
-  size_t NByteSize = k * n * sizeof(float);
+  size_t MByteSize = m * l * sizeof(float);
+  size_t NByteSize = l * n * sizeof(float);
   size_t outByteSize = m * n * sizeof(float);
 
   cudaMalloc(&M_d, MByteSize);
@@ -101,7 +101,7 @@ int main(void) {
   // Kernel A - each thread computes a row
   dim3 gdA(ceil(m / 1024.0), 1, 1); // Fit height (m) in `blockDim.x` blocks
   dim3 bdA(1024, 1, 1);             // Each output matrix element computes an entire row-vector
-  matmulRowKernel<<<gdA, bdA>>>(M_d, N_d, A_d, m, k, n);
+  matmulRowKernel<<<gdA, bdA>>>(M_d, N_d, A_d, m, l, n);
 
   cudaMemcpy(A.data(), A_d, outByteSize, cudaMemcpyDeviceToHost);
 
@@ -110,7 +110,7 @@ int main(void) {
   // Kernel B - each thread computes a column
   dim3 gdB(ceil(n / 1024.0), 1, 1); // Fit width (n) in `blockDim.x` blocks
   dim3 bdB(1024, 1, 1);             // Each output matrix element computes an entire column-vector
-  matmulColKernel<<<gdB, bdB>>>(M_d, N_d, B_d, m, k, n);
+  matmulColKernel<<<gdB, bdB>>>(M_d, N_d, B_d, m, l, n);
 
   cudaMemcpy(B.data(), B_d, outByteSize, cudaMemcpyDeviceToHost);
 
