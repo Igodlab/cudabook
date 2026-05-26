@@ -16,7 +16,7 @@ __global__ void matmulRowKernel(
 
   if (row < m) {
     // Compute output row-vector A[row,:]
-    // populate all j-th (\in n) elements of row-vector A[row,j] = \sum_{k}^k M[row,k] * N[k,j]
+    // populate all j-th (\in n) elements of row-vector A[row,j] = \sum_k^l M[row,k] * N[k,j]
     for (int Nj = 0; Nj < n; ++Nj) {
       float acc = 0.0f;
       for (int k = 0; k < l; ++k) {
