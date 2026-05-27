@@ -17,7 +17,8 @@
 | Exercise 5 | [3D flat indexing](#exercise-5) | Row-major addressing for rank-3 tensors |
 
 ---
-> [!IMPORTANT] Notation for R-rank tensors in the book
+> [!IMPORTANT] 
+> **Notation for R-rank tensors in the book**
 > We will follow the subscript notation for an R-rank tensor that expresses indexes from *right-to-left* (from *fastest-to-slowest varying index*).
 > 
 > For instance a 3-rank tensor $M\in\mathbb{R}^{m\times n \times l}$ 
@@ -244,11 +245,5 @@ Given a 3D tensor $M\in\mathbb{R}^{m\times n\times l}$ in row-major order the le
 - $i$ (rows) has stride $n \times r$
 - $j$ (cols) has stride $r$
 - $k$ (depth) has stride $1$
-
-> [!IMPORTANT] CUDA indexing *code notation* is backwards to mathematical index notation
-> 
-> In mathematics tensor elements $T_{i,j,k}$ are indexed from *left-to-right* (larger-to-smaller stride) in row-major as $T_{i\times (n\times r) + j\times r + k}$
-> 
-> Whereas in **CUDA code** indexes go from *right-to-left* (smaller-to-larger stride) `T[z][y][x]` is `T[z * m * n + y * n + x]`
 
 So the element `T[z=5][y=20][x=10]` of a $(\text{row, col, depth})=(m,n,l)=(500, 400, 300)$ tensor is accessed (in row-major) as `T[5*500*400 + 20*400 + 10] = T[1008010]`
