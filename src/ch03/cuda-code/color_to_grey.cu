@@ -2,8 +2,7 @@
 
 const int CHANNELS = 3;
 
-__global__
-void coloToGrayscaleConvertion(
+__global__ void coloToGrayscaleConvertion(
     unsigned char *Pout,
     unsigned char *Pin,
     int width,
@@ -13,19 +12,21 @@ void coloToGrayscaleConvertion(
   int row = blockIdx.y * blockDim.y + threadIdx.y;
 
   if (col < width && row < height) {
-    // Get 1D offset for the greyscale output
+    /* Get 1D offset for the greyscale output 
+     * (pixel index of output flat matrix) 
+     */
     int grayOffset = row * width + col;
 
-    // Input has 3x more dimensions due to rgb color channels
+    /* Input has 3x more dimensions due to rgb color channels */
     int rgbOffset = grayOffset * CHANNELS;
 
-    // Each pixel requires three bytes (one for each color channel)
-    // OpenCV reads images as bgr so we need to account for that
-    unsigned char b = Pin[rgbOffset];     // blue
-    unsigned char g = Pin[rgbOffset + 1]; // green
-    unsigned char r = Pin[rgbOffset + 2]; // red
+    /* Each pixel requires three bytes (one for each color channel) */
+    /* OpenCV reads images as bgr so we need to account for that */
+    unsigned char b = Pin[rgbOffset];     /* blue */
+    unsigned char g = Pin[rgbOffset + 1]; /* green */
+    unsigned char r = Pin[rgbOffset + 2]; /* red */
 
-    // Compute greys
+    /* Compute greys */
     Pout[grayOffset] = 0.299*r + 0.587*g + 0.114*b;
   }
 }

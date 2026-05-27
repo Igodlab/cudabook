@@ -1,20 +1,4 @@
 # Chapter 3 — Multidimensional Grids and Data
-
-<!--toc:start-->
-- [Chapter 3 — Multidimensional Grids and Data](#chapter-3-multidimensional-grids-and-data)
-  - [Summary](#summary)
-  - [Book Examples](#book-examples)
-    - [Color to greyscale](#color-to-greyscale)
-    - [Image blur](#image-blur)
-    - [Matrix multiplication](#matrix-multiplication)
-  - [Exercises](#exercises)
-    - [Exercise 1](#exercise-1)
-    - [Exercise 2](#exercise-2)
-    - [Exercise 3](#exercise-3)
-    - [Exercise 4](#exercise-4)
-    - [Exercise 5](#exercise-5)
-<!--toc:end-->
-
 **Programming Massively Parallel Processors, 5th Edition**
 
 ---
@@ -23,6 +7,7 @@
 
 | # | Name | Concepts illustrated |
 |---|------|----------------------|
+| ... | [Notation](#notation) | We use *slow←fast* varying index (& corresponding dimension) notation | 
 | Example 1 | [Color to greysclae](#color-to-greyscale) | Grid/block model, boundary conditions, per-thread pixel mapping |
 | Example 2 | [Image blur](#image-blur) | 2D grid indexing, neighborhood access, RGB stride convention |
 | Example 3 | [Matrix multiplication](#matrix-multiplication) | One output element per thread, row-major indexing, BLAS fundamentals |
@@ -33,25 +18,29 @@
 | Exercise 5 | [3D flat indexing](#exercise-5) | Row-major addressing for rank-3 tensors |
 
 ---
+
+## Notation
+**for the rest of the book and repo!**
+
 > [!IMPORTANT] 
-> **Notation for R-rank tensors in the book**
+> **Notation for R-rank tensors**
 > 
-> We will follow the subscript notation for an R-rank covariant tensor that expresses indexes from ==*right-to-left* (from *fast-to-slow varying index*)==. Moreover, we'll be consistent in **both** CUDA code notation and mathematical expressions!
+> We will follow the subscript notation for a R-rank covariant tensor that expresses indexes from <mark>*right-to-left* (from *fast-to-slow varying index*)</mark>. Moreover, we'll be consistent in **both** CUDA code notation and mathematical expressions!
 > 
-> The generalized notation for addressing a $R$-rank tensor element with dimensions $T\in\mathbb{R}^{d_{R-1} \times \cdots \times d_1 \times d_0}$ (*slow←fast*) is via its indexes $T_{i_{R-1},\ldots,i_1,i_0}$ (*slow←fast*), respectively.
+> The generalized notation for addressing a R-rank tensor element with dimensions $T\in\mathbb{R}^{d_{R-1} \times \cdots \times d_1 \times d_0}$ (*slow←fast*) is via its indexes $T_{i_{R-1},\ldots,i_1,i_0}$ (*slow←fast*), respectively.
 > 
 > The generalized stride $s_k=\prod_{j=0}^{k-1}d_j$ is needed to compute the index in a row-major flattened tensor: $\text{flat(index)}=\sum_{r=0}^{R-1}i_rs_r$. For example:
 > - 3D tensor $T\in\mathbb{R}^{d_2\times d_1\times d_0}$ element $T_{i_2,i_1,i_0}$ as row-major $T_{i_0 + i_1\times d_0 + i_2\times(d_0\times d_1)}$
 > - 4D tensor $T\in\mathbb{R}^{d_3\times d_2\times d_1\times d_0}$ element $T_{i_3,i_2,i_1,i_0}$ as row-major $T_{i_0 + i_1\times d_0 + i_2\times(d_0\times d_1) + i_3\times(d_0\times d_1\times d_2)}$
 > 
-> Throughout the book we'll use variations of letters so here is a useful table (up to 4-rank tensors):
+> Throughout the book we'll use variations of symbols depending on what kind of variables we're dealing with so here is a useful table (up to 4-rank tensors):
 >
-> | Description | Genearlized | Unespecific | Deep Learning |
-> |---|---|---|---|
-> | *fastest index*, dim-0, cols, width | $i_0\in[0, d_0]$ | $i\in[0,m]$ | $w\in[0,W]$ |
-> | dim-1, rows, height                 | $i_1\in[0, d_1]$ | $j\in[0,n]$ | $h\in[0,H]$ |
-> | dim-2, depth, channels              | $i_2\in[0, d_2]$ | $k\in[0,p]$ | $c\in[0,C]$ |
-> | dim-3, sample, batch                | $i_3\in[0, d_3]$ | $l\in[0,q]$ | $n\in[0,N]$ |
+> | Description | Mathematical<br>genearlized | Unspecific | Deep Learning | CUDA `threads` | 
+> |---|---|---|---|---|
+> | *fastest index*, dim-0, columns, channels | $i_0\in[0, d_0-1]$ | $i\in[0,m-1]$ | $c\in[0,C-1]$ | `threadIdx.x`$\in[0,\texttt{warp}-1]$ |
+> | dim-1, rows, width                        | $i_1\in[0, d_1-1]$ | $j\in[0,n-1]$ | $w\in[0,W-1]$ | `threadIdx.y`$\in[0,\texttt{warp}-1]$ |
+> | dim-2, depth, height                      | $i_2\in[0, d_2-1]$ | $k\in[0,p-1]$ | $h\in[0,H-1]$ | `threadIdx.z`$\in[0,\texttt{warp}-1]$ |
+> | *slowest index*, dim-3, sample, batch     | $i_3\in[0, d_3-1]$ | $l\in[0,q-1]$ | $n\in[0,N-1]$ | NA | 
 
 
 
@@ -59,7 +48,7 @@
 
 ### Color to greyscale 
 
-[color_to_grey.cu](color_to_grey.cu) shows how to get started with the grids and blocks GPU model using an example of converting a color image to greyscale. Introduces boundary conditions to account for excess threads larger than image pixels.
+[color_to_grey.cu](color_to_grey.cu) shows how to get started with the grids and blocks GPU model using an example of converting a color image to greyscale. The problem introduces the use of boundary conditions in our kernel to account for excess threads larger than image pixels.
 
 ```cuda
 __global__ void coloToGrayscaleConvertion(
@@ -72,19 +61,21 @@ __global__ void coloToGrayscaleConvertion(
   int row = blockIdx.y * blockDim.y + threadIdx.y;
 
   if (col < width && row < height) {
-    // Get 1D offset for the greyscale output
+    /* Get 1D offset for the greyscale output 
+     * (pixel index of output flat matrix) 
+     */
     int grayOffset = row * width + col;
 
-    // Input has 3x more dimensions due to rgb color channels
+    /* Input has 3x more dimensions due to rgb color channels */
     int rgbOffset = grayOffset * CHANNELS;
 
-    // Each pixel requires three bytes (one for each color channel)
-    // OpenCV reads images as bgr so we need to account for that
-    unsigned char b = Pin[rgbOffset];     // blue
-    unsigned char g = Pin[rgbOffset + 1]; // green
-    unsigned char r = Pin[rgbOffset + 2]; // red
+    /* Each pixel requires three bytes (one for each color channel) */
+    /* OpenCV reads images as bgr so we need to account for that */
+    unsigned char b = Pin[rgbOffset];     /* blue */
+    unsigned char g = Pin[rgbOffset + 1]; /* green */
+    unsigned char r = Pin[rgbOffset + 2]; /* red */
 
-    // Compute greys
+    /* Compute greys */
     Pout[grayOffset] = 0.299*r + 0.587*g + 0.114*b;
   }
 }
@@ -104,7 +95,7 @@ __global__ void imageBlur(
 {
   int col = blockIdx.x * blockDim.x + threadIdx.x;
   int row = blockIdx.y * blockDim.y + threadIdx.y;
-  int channel = threadIdx.z; // (b,g,r)=(0,1,2)
+  int channel = threadIdx.z; /* (b,g,r)=(0,1,2) */
 
   if (col < width && row < height) {
     int acc = 0;
@@ -143,7 +134,7 @@ __global__ void MatrixMulKernel(
 
   if (col < width && row < height) {
     float acc = 0;
-    // Compute P[j,i] = \sum_k^p M[j,k] * N[k,i]
+    /* Compute P[j,i] = \sum_k^p M[j,k] * N[k,i] */
     for (int k = 0; k < width; ++k) {
       acc += M[row*width+k] * N[k*width+col];
     }
@@ -169,9 +160,9 @@ __global__ void MatrixMulKernel(
 ```cuda
 // A - write a kernel that has each thread produce one output matrix row
 __global__ void matmulRowKernel(
-    float* M, // \in R^{m x l}
-    float* N, // \in R^{l x n}
-    float* A, // \in R^{m x n}
+    float* M, /* \in R^{m x l} */
+    float* N, /* \in R^{l x n} */
+    float* A, /* \in R^{m x n} */
     int m,
     int l,
     int n)
@@ -179,8 +170,8 @@ __global__ void matmulRowKernel(
   int row = blockIdx.x * blockDim.x + threadIdx.x;
 
   if (row < m) {
-    // Compute output row-vector A[row,:]
-    // populate all j-th (\in n) elements of row-vector A[row,j] = \sum_k^{l-1} M[row,k] * N[k,j]
+    /* Compute output row-vector A[row,:] */
+    /* populate all j-th (\in n) elements of row-vector A[row,j] = \sum_k^{l-1} M[row,k] * N[k,j] */
     for (int Nj = 0; Nj < n; ++Nj) {
       float acc = 0.0f;
       for (int k = 0; k < l; ++k) {
@@ -191,7 +182,7 @@ __global__ void matmulRowKernel(
   }
 }
 
-// B - write a kernel that has each thread produce one output matrix column
+/* B - write a kernel that has each thread produce one output matrix column */
 __global__ void matmulColKernel(
     float* M,
     float* N,
@@ -203,14 +194,14 @@ __global__ void matmulColKernel(
   int col = blockIdx.x * blockDim.x + threadIdx.x;
 
   if (col < n) {
-    // Compute output col-vector B[:,col]
-    // populate all i-th (\in m) elements of col-vector B[i,col] = \sum_k^{l-1} M[i,k] * N[k,col]
+    /* Compute output col-vector B[:,col] */
+    /* populate all i-th (\in m) elements of col-vector B[i,col] = \sum_k^{l-1} M[i,k] * N[k,col] */
     for (int Mi = 0; Mi < m; ++Mi) {
       float acc = 0.0f;
       for (int k = 0; k < l; ++k){
         acc += M[Mi * l + k] * N[k * n + col];
       }
-      // Populate Mi-th element of column-vector B[:,col]
+      /* Populate Mi-th element of column-vector B[:,col] */
       B[Mi * n + col] = acc;
     }
   }
@@ -266,16 +257,16 @@ void foo(float* a_d , float* b_d) {
 
 ### Exercise 4
 
-Given a 2D matrix $M\in\mathbb{R}^{m\times n}$ stored as a flat vector, express element `M[j][i]` in:
+Given a 2D matrix $M\in\mathbb{R}^{n\times m}$ stored as a flat vector, express element `M[j][i]` in:
 
-- **Row-major:** `M[i * n + j]`
-- **Column-major:** `M[j * m + i]`
+- **Row-major:** `M[j * m + i]`
+- **Column-major:** `M[i * n + j]`
 
 ### Exercise 5
 
-Given a 3D tensor $M\in\mathbb{R}^{m\times n\times l}$ in row-major order the leftmost index varies fastest, so the strides are:
-- $i$ (rows) has stride $n \times r$
-- $j$ (cols) has stride $r$
+Given a 3D tensor $M\in\mathbb{R}^{p\times n\times m}$ in row-major order the leftmost index varies fastest, so the strides are:
+- $i$ (cols) has stride $n \times p$
+- $j$ (rows) has stride $p$
 - $k$ (depth) has stride $1$
 
-So the element `T[z=5][y=20][x=10]` of a $(\text{row, col, depth})=(m,n,l)=(500, 400, 300)$ tensor is accessed (in row-major) as `T[5*500*400 + 20*400 + 10] = T[1008010]`
+So the element `T[k=z=5][j=y=20][i=x=10]` of a $(\texttt{depth, rows, cols})=(l,n,m)=(300, 500, 400)$ tensor is accessed (in row-major) as `T[5*(400*500) + 20*400 + 10] = T[1008010]`
