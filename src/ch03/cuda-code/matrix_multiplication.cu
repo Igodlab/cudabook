@@ -15,7 +15,7 @@ __global__ void MatrixMulKernel(
 
   if (col < width && row < height) {
     float acc = 0;
-    // Compute P[i,j] = \sum_k M[i,k] * N[k,j]
+    // Compute P[j,i] = \sum_k M[j,k] * N[k,i]
     for (int k = 0; k < width; ++k) {
       acc += M[row*width+k] * N[k*width+col];
     }
@@ -24,7 +24,7 @@ __global__ void MatrixMulKernel(
 }
 
 int main(void) {
-  // Matrices dim: m rows (i iterates over rows), n cols (j iterates over cols)
+  // Matrices dim: m cols (i iterates over cols), n rows (j iterates over rows)
   int m = 1000;
   int n = m;
 
@@ -41,10 +41,10 @@ int main(void) {
   std::uniform_real_distribution<float> uniform_dist(u_min, u_max);
 
   // populate M, N using row-major indexing
-  for (int i = 0; i < m; ++i) {
-    for (int j = 0; j < n; ++j) {
-      M[i * n + j] = uniform_dist(rng);
-      N[i * n + j] = uniform_dist(rng);
+  for (int j = 0; j < n; ++j) {
+    for (int i = 0; i < m; ++i) {
+      M[j * m + i] = uniform_dist(rng);
+      N[j * m + i] = uniform_dist(rng);
     }
   }
 
@@ -60,14 +60,14 @@ int main(void) {
 
   dim3 dimGrid(ceil(m/16.0), ceil(n/16.0), 1);
   dim3 dimBlock(16, 16, 1);
-  MatrixMulKernel<<<dimGrid, dimBlock>>>(M_d, N_d, P_d, m, n);
+  MatrixMulKernel<<<dimGrid, dimBlock>>>(M_d, N_d, P_d, n, m);
 
   cudaMemcpy(P.data(), P_d, matByteDim, cudaMemcpyDeviceToHost);
 
   // Print Matrices using printMatrixFlat(matrix, rows, cols, name, cap(optional))
-  printMatrixFlat(M, m, n, "M", 3);
-  printMatrixFlat(N, m, n, "N", 3);
-  printMatrixFlat(P, m, n, "P", 3);
+  printMatrixFlat(M, n, m, "M", 3);
+  printMatrixFlat(N, n, m, "N", 3);
+  printMatrixFlat(P, n, m, "P", 3);
 
   cudaFree(M_d);
   cudaFree(N_d);

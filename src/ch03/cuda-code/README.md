@@ -17,6 +17,10 @@
 | Exercise 5 | [3D flat indexing](#exercise-5) | Row-major addressing for rank-3 tensors |
 
 ---
+> [!IMPORTANT] Notation for R-rank tensors in the book
+> We will follow the subscript notation for an R-rank tensor that expresses indexes from *right-to-left* (from *fastest-to-slowest varying index*).
+> 
+> For instance a 3-rank tensor $M\in\mathbb{R}^{m\times n \times l}$ 
 
 ## Book Examples
 
@@ -106,7 +110,7 @@ __global__ void MatrixMulKernel(
 
   if (col < width && row < height) {
     float acc = 0;
-    // Compute P[i,j] = \sum_k M[i,k] * N[k,j]
+    // Compute P[j,i] = \sum_k^p M[j,k] * N[k,i]
     for (int k = 0; k < width; ++k) {
       acc += M[row*width+k] * N[k*width+col];
     }
