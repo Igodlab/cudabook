@@ -48,7 +48,13 @@
 
 ### Color to greyscale 
 
-[color_to_grey.cu](color_to_grey.cu) shows how to get started with the grids and blocks GPU model using an example of converting a color image to greyscale. The problem introduces the use of boundary conditions in our kernel to account for excess threads larger than image pixels.
+For the first two examples we use the same input matrix (with rgb channels so technically a *3D tensor*) - Opeth's underrated Sorceress album cover
+
+<img src="../../../images/ch03/opeth-sorceress.png" width="30%">
+
+[color_to_grey.cu](color_to_grey.cu) shows how to get started with the grids and blocks GPU model using an example of converting a color image to greyscale. The problem introduces the use of boundary conditions in our kernel to account for excess threads larger than image pixels. We use [unspecific notation](#notation) with manual handling of the rgb channel dimension.
+
+<img src="../../../images/ch03/opeth-sorceress-grey.png" width="30%">
 
 ```cuda
 __global__ void coloToGrayscaleConvertion(
@@ -83,36 +89,43 @@ __global__ void coloToGrayscaleConvertion(
 
 ### Image blur
 
-[image_blur.cu](image_blur.cu) shows a complex kernel that operates on an RGB color image using a 3-strided flat vector (row-major convention). Each thread computes one output pixel by averaging its neighborhood.
+[image_blur.cu](image_blur.cu) shows a more complex kernel that operates on an RGB color (3-strided) image. We use [Deep Learning notation](#notation) $H\times W\times C$ ($(h,w,c)$ *slow←fast* varying indexes, respectively) with the channel dimension as the faster varying index and height being the slower one. Each thread computes one output pixel by averaging all its neighborhood pixels within boundary conditions.
+
+<img src="../../../images/ch03/opeth-sorceress-blur.png" width="30%">
 
 ```cuda
 __global__ void imageBlur(
     unsigned char* Pin,
     unsigned char* Pout,
-    int width,
-    int height,
+    int W,
+    int H,
     int blur_radii) 
 {
-  int col = blockIdx.x * blockDim.x + threadIdx.x;
-  int row = blockIdx.y * blockDim.y + threadIdx.y;
-  int channel = threadIdx.z; /* (b,g,r)=(0,1,2) */
+  /* Deep Learning notation 
+   * dimensions: H x W x C
+   * indexes (slow←fast): (h, w, c)
+   */
+  int c = threadIdx.z; /* (b,g,r)=(0,1,2)$ */
+  int w = blockIdx.x * blockDim.x + threadIdx.x; 
+  int h = blockIdx.y * blockDim.y + threadIdx.y; 
 
-  if (col < width && row < height) {
+  if (w < W && h < H) {
     int acc = 0;
-    int pixels = 0;
+    int pixels = 0; /* count number of pixels for averaging */
 
     for (int blurRow = -blur_radii; blurRow < blur_radii + 1; ++blurRow) {
       for (int blurCol = -blur_radii; blurCol < blur_radii + 1; ++blurCol) {
-        int currCol = col + blurCol;
-        int currRow = row + blurRow;
+        int current_w = w + blurCol;
+        int current_h = h + blurRow;
 
-        if (currCol >= 0 && currCol < width && currRow >= 0 && currRow < height) {
-          acc += Pin[(currRow * width + currCol) * CHANNELS + channel];
+        if (current_w >= 0 && current_w < W && current_h >= 0 && current_h < H) {
+          /* row-major indexing: Pin[h*(C*W) + w*C + c] */
+          acc += Pin[current_h * (CHANNELS * W) + current_w * CHANNELS + c];
           ++pixels;
         }
       }
     }
-    Pout[(row * width + col) * CHANNELS + channel] = (unsigned char)(acc / pixels);
+    Pout[h * (CHANNELS * W) + w * CHANNELS + c] = (unsigned char)(acc / pixels);
   }
 }
 ```
