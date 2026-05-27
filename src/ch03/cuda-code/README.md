@@ -1,4 +1,20 @@
 # Chapter 3 — Multidimensional Grids and Data
+
+<!--toc:start-->
+- [Chapter 3 — Multidimensional Grids and Data](#chapter-3-multidimensional-grids-and-data)
+  - [Summary](#summary)
+  - [Book Examples](#book-examples)
+    - [Color to greyscale](#color-to-greyscale)
+    - [Image blur](#image-blur)
+    - [Matrix multiplication](#matrix-multiplication)
+  - [Exercises](#exercises)
+    - [Exercise 1](#exercise-1)
+    - [Exercise 2](#exercise-2)
+    - [Exercise 3](#exercise-3)
+    - [Exercise 4](#exercise-4)
+    - [Exercise 5](#exercise-5)
+<!--toc:end-->
+
 **Programming Massively Parallel Processors, 5th Edition**
 
 ---
@@ -19,9 +35,25 @@
 ---
 > [!IMPORTANT] 
 > **Notation for R-rank tensors in the book**
-> We will follow the subscript notation for an R-rank tensor that expresses indexes from *right-to-left* (from *fastest-to-slowest varying index*).
 > 
-> For instance a 3-rank tensor $M\in\mathbb{R}^{m\times n \times l}$ 
+> We will follow the subscript notation for an R-rank covariant tensor that expresses indexes from ==*right-to-left* (from *fast-to-slow varying index*)==. Moreover, we'll be consistent in **both** CUDA code notation and mathematical expressions!
+> 
+> The generalized notation for addressing a $R$-rank tensor element with dimensions $T\in\mathbb{R}^{d_{R-1} \times \cdots \times d_1 \times d_0}$ (*slow←fast*) is via its indexes $T_{i_{R-1},\ldots,i_1,i_0}$ (*slow←fast*), respectively.
+> 
+> The generalized stride $s_k=\prod_{j=0}^{k-1}d_j$ is needed to compute the index in a row-major flattened tensor: $\text{flat(index)}=\sum_{r=0}^{R-1}i_rs_r$. For example:
+> - 3D tensor $T\in\mathbb{R}^{d_2\times d_1\times d_0}$ element $T_{i_2,i_1,i_0}$ as row-major $T_{i_0 + i_1\times d_0 + i_2\times(d_0\times d_1)}$
+> - 4D tensor $T\in\mathbb{R}^{d_3\times d_2\times d_1\times d_0}$ element $T_{i_3,i_2,i_1,i_0}$ as row-major $T_{i_0 + i_1\times d_0 + i_2\times(d_0\times d_1) + i_3\times(d_0\times d_1\times d_2)}$
+> 
+> Throughout the book we'll use variations of letters so here is a useful table (up to 4-rank tensors):
+>
+> | Description | Genearlized | Unespecific | Deep Learning |
+> |---|---|---|---|
+> | *fastest index*, dim-0, cols, width | $i_0\in[0, d_0]$ | $i\in[0,m]$ | $w\in[0,W]$ |
+> | dim-1, rows, height                 | $i_1\in[0, d_1]$ | $j\in[0,n]$ | $h\in[0,H]$ |
+> | dim-2, depth, channels              | $i_2\in[0, d_2]$ | $k\in[0,p]$ | $c\in[0,C]$ |
+> | dim-3, sample, batch                | $i_3\in[0, d_3]$ | $l\in[0,q]$ | $n\in[0,N]$ |
+
+
 
 ## Book Examples
 
