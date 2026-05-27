@@ -125,10 +125,10 @@ __global__ void MatrixMulKernel(
 
 ### Exercise 1
 
-[ch03_ex01.cu](ch03_ex01.cu) shows two kernel variants for matrix multiplication where $M\in\mathbb{R}^{m\times l}$ and $N \in \mathbb{R}^{l\times n}$:
+[ch03_ex01.cu](ch03_ex01.cu) shows two kernel variants for matrix multiplication where $M\in\mathbb{R}^{n\times p}$ and $N \in \mathbb{R}^{p\times m}$:
 
-- **1.a** — one thread computes an entire output row-vector `A[:][row]` $\leftarrow \left[\sum_k^{l-1} M_{\text{row},k}N_{k,0}, \ldots, \sum_k^{l-1} M_{\text{row},k}N_{k,n-1}\right]$
-- **1.b** — one thread computes an entire output column-vector `B[col][:]` $\leftarrow \left[\sum_k^{l-1} M_{0,k_{th}}N_{k_{th},\text{col}}, \ldots, \sum_{k_{th}}^{l-1} M_{m-1,k_{th}}N_{k_{th},\text{col}}\right]^T$
+- **1.a** — one thread computes an entire output row-vector `A[row][:]` $\leftarrow \left[\sum_k^{p-1} M_{\text{row},k}N_{k,0}, \ldots, \sum_k^{p-1} M_{\text{row},k}N_{k,m-1}\right]$
+- **1.b** — one thread computes an entire output column-vector `B[:][col]` $\leftarrow \left[\sum_k^{p-1} M_{0,k}N_{k,\text{col}}, \ldots, \sum_k^{p-1} M_{n-1,k}N_{k,\text{col}}\right]^T$
 - **1.c** - Neither is optimal. Both carry one uncoalesced access pattern. The tiled shared memory approach (Ch. 5) resolves this
 
 <img src="../../../images/ch03/ch03_ex01-sol.png" width="100%">

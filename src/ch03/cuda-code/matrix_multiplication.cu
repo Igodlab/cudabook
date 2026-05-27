@@ -15,7 +15,7 @@ __global__ void MatrixMulKernel(
 
   if (col < width && row < height) {
     float acc = 0;
-    // Compute P[j,i] = \sum_k M[j,k] * N[k,i]
+    // Compute P[j,i] = \sum_k^p M[j,k] * N[k,i]
     for (int k = 0; k < width; ++k) {
       acc += M[row*width+k] * N[k*width+col];
     }
