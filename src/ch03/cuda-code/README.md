@@ -278,7 +278,7 @@ Given a 2D matrix $M\in\mathbb{R}^{n\times m}$ stored as a flat vector, express 
 
 ### Exercise 5
 
-Given a 3D tensor $M\in\mathbb{R}^{p\times n\times m}$ in row-major order the leftmost index varies fastest, so the strides are:
+Given a 3D tensor $M\in\mathbb{R}^{p\times n\times m}$ in row-major order the rightmost index varies fastest, so the strides are:
 - $k$ (depth) has stride $m \times p$
 - $j$ (height) has stride $m$
 - $i$ (width) has stride $1$
