@@ -21,13 +21,13 @@ __global__ void matVecKernel(
 }
 
 int main(void) {
-  // Define matrix (square n x n) and vector (n x 1)
-  int n = 1000;
-  int m = n;
+  /* Define matrix (square n x n) and vector (n x 1) */
+  int m = 1000;
+  int n = m;
 
-  std::vector<float> B(m * n); // = n x n
-  std::vector<float> c(n);     // n x 1
-  std::vector<float> a(n);     // n x 1
+  std::vector<float> B(n * m); /* n x n */
+  std::vector<float> c(n);     /* n x 1 */
+  std::vector<float> a(n);     /* n x 1 */
 
   float u_min = -10.0f;
   float u_max = 10.f;
@@ -35,20 +35,20 @@ int main(void) {
   std::mt19937 rng(42);
   std::uniform_real_distribution<float> uniform_dist(u_min, u_max);
 
-  // Populate matrix B an vector c
-  for (int i = 0; i < n; ++i) {
-    c[i] = uniform_dist(rng);
-    for (int j = 0; j < n; ++j) {
-      B[i * n + j] = uniform_dist(rng);
+  /* Populate matrix B an vector c */
+  for (int j = 0; j < n; ++j) {
+    c[j] = uniform_dist(rng);
+    for (int i = 0; i < m; ++i) {
+      B[j * m + i] = uniform_dist(rng);
     }
   }
 
-  printMatrixFlat(B, n, n, "B", 3);
+  printMatrixFlat(B, n, m, "B", 3);
   printVec(c.data(), n, 3);
 
-  // GPU prep
+  /* GPU prep */
   float *B_d, *c_d, *a_d;
-  size_t matrixByteSize = n * n * sizeof(float);
+  size_t matrixByteSize = n * m * sizeof(float);
   size_t vectorByteSize = n * sizeof(float);
 
   cudaMalloc(&B_d, matrixByteSize);
@@ -58,7 +58,7 @@ int main(void) {
   cudaMemcpy(B_d, B.data(), matrixByteSize, cudaMemcpyHostToDevice);
   cudaMemcpy(c_d, c.data(), vectorByteSize, cudaMemcpyHostToDevice);
 
-  // Call kernel
+  /* Call kernel */
   dim3 gd(ceil(n/1024.0), 1, 1);
   dim3 bd(1024, 1, 1);
   matVecKernel<<<gd, bd>>>(B_d, c_d, a_d, n);

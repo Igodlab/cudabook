@@ -35,12 +35,12 @@
 > 
 > Throughout the book we'll use variations of symbols depending on what kind of variables we're dealing with so here is a useful table (up to 4-rank tensors):
 >
-> | Description | Mathematical<br>genearlized | Unspecific | Deep Learning | CUDA `threads` | 
-> |---|---|---|---|---|
-> | *fastest index*, dim-0, columns, channels | $i_0\in[0, d_0-1]$ | $i\in[0,m-1]$ | $c\in[0,C-1]$ | `threadIdx.x`$\in[0,\texttt{warp}-1]$ |
-> | dim-1, rows, width                        | $i_1\in[0, d_1-1]$ | $j\in[0,n-1]$ | $w\in[0,W-1]$ | `threadIdx.y`$\in[0,\texttt{warp}-1]$ |
-> | dim-2, depth, height                      | $i_2\in[0, d_2-1]$ | $k\in[0,p-1]$ | $h\in[0,H-1]$ | `threadIdx.z`$\in[0,\texttt{warp}-1]$ |
-> | *slowest index*, dim-3, sample, batch     | $i_3\in[0, d_3-1]$ | $l\in[0,q-1]$ | $n\in[0,N-1]$ | NA | 
+> | Mathematical<br>genearlized | Unspecific | Deep Learning | CUDA `threads` | 
+> | :--- | :--- | :--- | :--- |
+> | $i_0\in[0, d_0-1]$ (dim-0) | $i\in[0,m-1]$ (cols)   | $c\in[0,C-1]$ (channels) | `threadIdx.x` (block-width)  |
+> | $i_1\in[0, d_1-1]$ (dim-1) | $j\in[0,n-1]$ (rows)   | $w\in[0,W-1]$ (width)    | `threadIdx.y` (block-height) |
+> | $i_2\in[0, d_2-1]$ (dim-2) | $k\in[0,p-1]$ (depth)  | $h\in[0,H-1]$ (height)   | `threadIdx.z` (block-depth)  |
+> | $i_3\in[0, d_3-1]$ (dim-3) | $l\in[0,q-1]$ (sample) | $n\in[0,N-1]$ (batch)    | NA | 
 
 
 
@@ -132,7 +132,7 @@ __global__ void imageBlur(
 
 ### Matrix multiplication 
 
-[matrix_multiplication.cu](matrix_multiplication.cu) is the fundamental BLAS example, one output matrix element per thread. Each thread computes the dot product of one row of M and one column of N.
+[matrix_multiplication.cu](matrix_multiplication.cu) is the fundamental BLAS example. One output matrix element per thread. Each thread computes the dot product of one row of M and one column of N.
 
 ```cuda
 __global__ void MatrixMulKernel(
@@ -147,11 +147,11 @@ __global__ void MatrixMulKernel(
 
   if (col < width && row < height) {
     float acc = 0;
-    /* Compute P[j,i] = \sum_k^p M[j,k] * N[k,i] */
+    /* Compute P[j][i] = \sum_k^p M[j][k] * N[k][i] */
     for (int k = 0; k < width; ++k) {
       acc += M[row*width+k] * N[k*width+col];
     }
-    P[row*width+col] = acc;
+    P[row * width + col] = acc;
   }
 }
 ```
@@ -171,26 +171,27 @@ __global__ void MatrixMulKernel(
 <img src="../../../images/ch03/ch03_ex01-sol.png" width="100%">
 
 ```cuda
-// A - write a kernel that has each thread produce one output matrix row
+/* A - write a kernel that has each thread produce one output matrix row */
 __global__ void matmulRowKernel(
-    float* M, /* \in R^{m x l} */
-    float* N, /* \in R^{l x n} */
-    float* A, /* \in R^{m x n} */
+    float* M, /* \in R^{n x p} */
+    float* N, /* \in R^{p x m} */
+    float* A, /* \in R^{n x m} */
     int m,
-    int l,
+    int p,
     int n)
 {
   int row = blockIdx.x * blockDim.x + threadIdx.x;
 
-  if (row < m) {
-    /* Compute output row-vector A[row,:] */
-    /* populate all j-th (\in n) elements of row-vector A[row,j] = \sum_k^{l-1} M[row,k] * N[k,j] */
-    for (int Nj = 0; Nj < n; ++Nj) {
+  if (row < n) {
+    /* Compute output row-vector A[row][:] */
+    /* populate all i-th (\in m) elements in row-vector A[row][:] = \sum_k^p M[row][k] * N[k][i] */
+    for (int i = 0; i < m; ++i) {
       float acc = 0.0f;
-      for (int k = 0; k < l; ++k) {
-        acc += M[row * l + k] * N[k * n + Nj];
+      for (int k = 0; k < p; ++k) {
+        acc += M[row * p + k] * N[k * m + i];
       }
-      A[row * n + Nj] = acc;
+      /* row-th row-vector A[row][:] */
+      A[row * m + i] = acc;
     }
   }
 }
@@ -201,28 +202,28 @@ __global__ void matmulColKernel(
     float* N,
     float* B,
     int m,
-    int l,
+    int p,
     int n)
 {
   int col = blockIdx.x * blockDim.x + threadIdx.x;
 
-  if (col < n) {
-    /* Compute output col-vector B[:,col] */
-    /* populate all i-th (\in m) elements of col-vector B[i,col] = \sum_k^{l-1} M[i,k] * N[k,col] */
-    for (int Mi = 0; Mi < m; ++Mi) {
+  if (col < m) {
+    /* Compute output col-vector B[:][col] */
+    /* populate all j-th (\in n) elements in col-vector B[:][col] = \sum_k^p M[j][k] * N[k][col] */
+    for (int j = 0; j < n; ++j) {
       float acc = 0.0f;
-      for (int k = 0; k < l; ++k){
-        acc += M[Mi * l + k] * N[k * n + col];
+      for (int k = 0; k < p; ++k){
+        acc += M[j * p + k] * N[k * m + col];
       }
-      /* Populate Mi-th element of column-vector B[:,col] */
-      B[Mi * n + col] = acc;
+      /* col-th column-vector B[:][col] */
+      B[j * m + col] = acc;
     }
   }
 }
 ```
 
 ### Exercise 2
-[ch03_ex02.cu](ch03_ex02.cu) kernel where each thread computes one full dot product between a square matrix row `B[row,:]` and the input vector `c`. Grid is 1D over the number of matrix rows.
+[ch03_ex02.cu](ch03_ex02.cu) kernel where each thread computes one full dot product between a square matrix row `B[row][:]` and the input vector `c`. Grid is 1D over the number of matrix rows.
 
 ```cuda
 __global__ void matVecKernel(
@@ -278,8 +279,8 @@ Given a 2D matrix $M\in\mathbb{R}^{n\times m}$ stored as a flat vector, express 
 ### Exercise 5
 
 Given a 3D tensor $M\in\mathbb{R}^{p\times n\times m}$ in row-major order the leftmost index varies fastest, so the strides are:
-- $i$ (cols) has stride $n \times p$
-- $j$ (rows) has stride $p$
-- $k$ (depth) has stride $1$
+- $k$ (depth) has stride $m \times p$
+- $j$ (height) has stride $m$
+- $i$ (width) has stride $1$
 
-So the element `T[k=z=5][j=y=20][i=x=10]` of a $(\texttt{depth, rows, cols})=(l,n,m)=(300, 500, 400)$ tensor is accessed (in row-major) as `T[5*(400*500) + 20*400 + 10] = T[1008010]`
+So the element `T[z=5][y=20][x=10]` of a $(p,n,m)=(300, 500, 400)$ tensor is accessed (in row-major) as `T[5*(400*500) + 20*400 + 10] = T[1008010]`

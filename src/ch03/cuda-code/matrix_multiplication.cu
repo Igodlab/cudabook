@@ -15,32 +15,35 @@ __global__ void MatrixMulKernel(
 
   if (col < width && row < height) {
     float acc = 0;
-    // Compute P[j,i] = \sum_k^p M[j,k] * N[k,i]
+    /* Compute P[j][i] = \sum_k^p M[j][k] * N[k][i] */
     for (int k = 0; k < width; ++k) {
       acc += M[row*width+k] * N[k*width+col];
     }
-    P[row*width+col] = acc;
+    P[row * width + col] = acc;
   }
 }
 
 int main(void) {
-  // Matrices dim: m cols (i iterates over cols), n rows (j iterates over rows)
+  /* Matrices dim: 
+   * m cols (i iterates over cols) fast index,
+   * n rows (j iterates over rows) slow index
+   */
   int m = 1000;
   int n = m;
 
-  // Iniitialize matrices as flat vectors
+  /* Iniitialize matrices as flat vectors */
   std::vector<float> M(m * n);
   std::vector<float> N(m * n);
   std::vector<float> P(m * n);
 
-  // random device and values
+  /* random device and values */
   float u_min = -10.0f;
   float u_max = 10.0f;
 
   std::mt19937 rng(42);
   std::uniform_real_distribution<float> uniform_dist(u_min, u_max);
 
-  // populate M, N using row-major indexing
+  /* populate M, N using row-major indexing */
   for (int j = 0; j < n; ++j) {
     for (int i = 0; i < m; ++i) {
       M[j * m + i] = uniform_dist(rng);
@@ -48,7 +51,7 @@ int main(void) {
     }
   }
 
-  // Prep for kernel
+  /* Prep for kernel */
   float *M_d, *N_d, *P_d;
   size_t matByteDim = n * m * sizeof(float);
   cudaMalloc(&M_d, matByteDim);
@@ -64,7 +67,9 @@ int main(void) {
 
   cudaMemcpy(P.data(), P_d, matByteDim, cudaMemcpyDeviceToHost);
 
-  // Print Matrices using printMatrixFlat(matrix, rows, cols, name, cap(optional))
+  /* Print Matrices using utils.hpp:
+   * printMatrixFlat(matrix, rows, cols, name, cap(optional)) 
+   */
   printMatrixFlat(M, n, m, "M", 3);
   printMatrixFlat(N, n, m, "N", 3);
   printMatrixFlat(P, n, m, "P", 3);
