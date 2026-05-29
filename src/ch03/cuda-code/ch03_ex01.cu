@@ -106,7 +106,7 @@ int main(void) {
   cudaMemcpy(N_d, N.data(), NByteSize, cudaMemcpyHostToDevice);
 
   /* Kernel A - each thread computes a row */
-  dim3 gdA(ceil(m / 1024.0), 1, 1); /* Fit height (m) in `blockDim.x` blocks */
+  dim3 gdA(ceil(n / 1024.0), 1, 1); /* Fit height (n) in `blockDim.x` blocks */
   dim3 bdA(1024, 1, 1);             /* Each output matrix element computes an entire row-vector */
   matmulRowKernel<<<gdA, bdA>>>(M_d, N_d, A_d, m, p, n);
 
@@ -115,7 +115,7 @@ int main(void) {
   printMatrixFlat(A, n, m, "A (row-vector per thread)", 5);
 
   /* Kernel B - each thread computes a column */
-  dim3 gdB(ceil(n / 1024.0), 1, 1); /* Fit width (n) in `blockDim.x` blocks */
+  dim3 gdB(ceil(m / 1024.0), 1, 1); /* Fit width (m) in `blockDim.x` blocks */
   dim3 bdB(1024, 1, 1);             /* Each output matrix element computes an entire column-vector */
   matmulColKernel<<<gdB, bdB>>>(M_d, N_d, B_d, m, p, n);
 
