@@ -44,21 +44,31 @@ void foo(int* a_d, int* b_d) {
 ```
 
 Useful data is `gridDim(.x, .y, .z)=(8,1,1)` and `blockDim(.x, .y, .z)=(128,1,1)`
-- **1.a.** There's 128 threads in each block thus, 4 warps per block.
+- **1.a.** There are 128 threads in each block thus, 4 warps per block.
 - **1.b.** Four warps per block means there is 32 warps in the grid (total of 8 blocks).
 - **1.c.** For the conditional of line `04`, divergence is any other path than the first 'then' path:
     - *i.* In every block:
-    Warp 0 (0-31) is active, all its threads 0-31 are < 40.
-    Warp 1 (32-63) has only threads 32-39 active (the rest is > 40).
-    Warp 2 (64-95) is completely inactive.
-    Warp 3 (96-127) has threads 104-127 active.
-    Warp 4 (128-159) is active.
-    - *ii.* All threads diverge, they just do so through different paths.  40 threads take the first then path (indexes 0 to 31)
-    - *iii.* Recall that SIMD efficiency is active-threads/total-threads-in-warp. All 32 threads in warp 0 are active so 100%.
-    - *iv.* Warp 1 has threads 32-39 (9 threads) going through the first then path so efficiency is 9/32 -> 28%.
-    - *v.* Warp 3 (threads 96-127) has 
-
-Based on the cuda kernel
+        - Warp 0 (0-31) is active, all its threads indexes are < 40.
+        - Warp 1 (32-63) has only threads 32-39 active (the rest is > 40).
+        - Warp 2 (64-95) is completely inactive (all its indexes are < 104).
+        - Warp 3 (96-127) has threads 104-127 active (fullfill >= 104).
+        - There is 3 active warps per block which means there are 24 active warps in the grid.
+    - *ii.* Following *1.c.i.* there is one divergent warp per block making a total of 8 divergent warps in the grid.
+    - *iii.* Recall that SIMD efficiency is *active-threads/warp*. All 32 threads in warp 0 are active so 100%.
+    - *iv.* Warp 1 has 8 active threads → 25%.
+    - *v.* Warp 3 has 24 active thrads → 75%.
+- **1.d.** For the conditional in line `07`
+    - *i.* In every block:
+        - Warp 0 (0-31) is active, all its threads indexes are < 40.
+        - Warp 1 (32-63) has only threads 32-39 active (the rest is > 40).
+        - Warp 2 (64-95) is completely inactive (all its indexes are < 104).
+        - Warp 3 (96-127) has threads 104-127 active (fullfill >= 104).
+        - There is 3 active warps per block which means there are 24 active warps in the grid.
+    - *ii.* Following *1.d.i.* there is one divergent warp per block making a total of 8 divergent warps in the grid.
+    - *iii.* Warp 0 of block 0 has 8 active threads → 25%.
+- **1.e.** For the conditional in line `07`
+    - *i.* In every block:
+    - *ii.* Following *1.d.i.* there is one divergent warp per block making a total of 8 divergent warps in the grid.
 
 ### Exercise 2
 
