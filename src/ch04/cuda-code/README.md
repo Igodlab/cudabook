@@ -80,15 +80,17 @@ The 8 hypothetical threads have execution times $\vec{t}=(2.0, 2.3, 3.0, 2.8, 2.
 $$
 \begin{align*}
 100\times\sum_i (t_\text{barrier} - t_i)/t_\text{barrier} &= \frac{100}{8t_\text{barrier}}\sum(1.0, 0.7, 0.0, 0.2, 0.6, 1.1, 0.4, 0.1) \\
-&=4.1/24 \\
-&=17.08\%
+&=100\times\frac{4.1}{24} \\
+&=17.08 %
 \end{align*}
 $$ 
 
 ### Exercise 5
 
+Even if a kernel has only 32 threads is not a good idea to ommit a `__syncthreads()` despite it being redudant at a hardware level (where all threads in a warp execute in lockstep under the SIMD model) from a software perspective it forces a time barrier synchronization which makes the code more portable. 
 
 ### Exercise 6
+
 
 
 ### Exercise 7
