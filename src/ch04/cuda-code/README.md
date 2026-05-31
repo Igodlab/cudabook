@@ -67,7 +67,7 @@ Useful data is `gridDim(.x, .y, .z)=(8,1,1)` and `blockDim(.x, .y, .z)=(128,1,1)
 
 ### Exercise 2
 
-We'll have a 1D grid of $\lceil 2000/512\rceil=4$ thread blocks each containing 512 threads thus, there will be 2048 threads in the grid
+We'll have a 1D grid of $\lceil 2000/512\rceil=4$ thread blocks each containing 512 threads thus, there will be 2048 threads in the grid.
 
 ### Exercise 3
 
@@ -75,7 +75,7 @@ The last warp (block 3, warp 15, threadIdx 480-511, absolute threadIdx 2015-2047
 
 ### Exercise 4
 
-The 8 hypothetical threads have execution times $2.0, 2.3, 3.0, 2.8, 2.4, 1.9, 2.6, 2.9 \mu s$, respectively. The barrier is reached at 3.0s
+The 8 hypothetical threads have execution times $\vec{t}=(2.0, 2.3, 3.0, 2.8, 2.4, 1.9, 2.6, 2.9) \mu s$, respectively. The barrier for the entire block is set by the longest execution time of $t_\text{barrier}=3.0\mu s$ until then most of the threads sit idle. The problem asks for the aggregate-waiting-time percentage $100\times\sum_i (t_\text{barrier} - t_i)/t_\text{barrier}$. The aggregate waiting time is $\frac{100}{8t_\text{barrier}}\sum(1.0, 0.7, 0.0, 0.2, 0.6, 1.1, 0.4, 0.1)\mu s=4.1/24\mu s-\rightarrow 17.08\%$ 
 
 ### Exercise 5
 
