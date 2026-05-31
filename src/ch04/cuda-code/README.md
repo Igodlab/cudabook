@@ -81,23 +81,40 @@ $$
 \begin{align*}
 100\times\sum_i (t_\text{barrier} - t_i)/t_\text{barrier} &= \frac{100}{8t_\text{barrier}}\sum(1.0, 0.7, 0.0, 0.2, 0.6, 1.1, 0.4, 0.1) \\
 &=100\times\frac{4.1}{24} \\
-&=17.08 %
+&=17.08 \%
 \end{align*}
 $$ 
 
 ### Exercise 5
 
-Even if a kernel has only 32 threads is not a good idea to ommit a `__syncthreads()` despite it being redudant at a hardware level (where all threads in a warp execute in lockstep under the SIMD model) from a software perspective it forces a time barrier synchronization which makes the code more portable. 
+Even if a kernel has only 32 threads is not a good idea to ommit a `__syncthreads()` despite it being redudant at a hardware level (where all threads in a warp execute in lockstep under the SIMD model) from a software perspective it forces a time barrier synchronization which helps with *transparent scalability* and makes the code more portable. 
 
 ### Exercise 6
 
+If a SM can take up to 1536 and up to 4 thread blocks. The block configuration that gives the most threads in the SM is **(6.c.) 3 blocks with 512 threads/block**
 
+| # | threads/block | 2 blocks | 3 blocks | 4 blocks |
+|---|---|---|---|---|
+| 6.a | 128  |  256 |      384 |  512 |
+| 6.b | 256  |  512 |      768 | 1024 |
+| 6.c | 512  | 1024 | **1536** | 2048 | 
+| 6.d | 1024 | 2048 |     3072 | 4096 |
 
 ### Exercise 7
 
+Assume a device with SMs that can take up to 64 blocks and 2048 threads/SM. All options are possible configurations given <= 2048 threads in the grid.
+- **7.a.** 8 blocks with 128 threads each → yields 1024 threads in grid with an occupancy of $100\times 1024 / 2048 = 50$%.
+- **7.b.** 16 blocks with 64 threads each → yields 1024 threads in grid with an occupancy of $100\times 1024 / 2048 = 50$%.
+- **7.c.** 32 blocks with 32 threads each → yields 1024 threads in grid with an occupancy of $100\times 1024 / 2048 = 50$%.
+- **7.d.** 64 blocks with 32 threads each → yields 2048 threads in grid with an occupancy of $100\times 2048 / 2048 = 50$%.
+- **7.e.** 32 blocks with 64 threads each → yields 2048 threads in grid with an occupancy of $100\times 2048 / 2048 = 50$%.
 
 ### Exercise 8
 
+A GPU with the following hardware limits: 2048 threads/SM, 32 blocks/SM & 64K (65536) registers/SM. Assess if the following specifications reach full occupancy and if not what is the limiting factor:
+- **8.a.** The kernel uses 128 threads/block and 30 registers/thread.
+- **8.b.** The kernel uses 32 threads/block and 29 registers/thread.
+- **8.c.** The kernel uses 256 threads/block and 34 registers/thread.
 
 ### Exercise 9
 
