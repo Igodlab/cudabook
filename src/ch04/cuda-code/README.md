@@ -62,17 +62,19 @@ Useful data is `gridDim(.x, .y, .z)=(8,1,1)` and `blockDim(.x, .y, .z)=(128,1,1)
     - *ii.* All 32 warps in the grid are divergent because even numbered thread indexes take the then path at `07` whereas odd indexes do not.
     - *iii.* Warp 0 has 16 threads active (even indexes) → 50% SIMD efficiency.
 - **1.e.** For the conditional in line `09`
-    - *i.* The right-hand side conditional at line `09`:  `rhs@09 = 5 - (i%3)` yield $\{5, 3, 4\}$ values that cycle around depending of the thread index of a warp. Which makes any thread index <= 5 divergent. That makes:
-        - All threads in warps 1-31 divergent 
-        - And threads 4-31 of warp 0 divergent as well
+    - *i.* The right-hand side conditional at line `09`:  `rhs@09 = 5 - (i%3)` yields values {5, 3, 4} that cycle around depending on the thread index of a warp. Which makes any thread index >= 5 divergent. That is:
+        - All threads in warps 1-4 diverge in any of the 8 blocks.
+        - And threads 4-31 of warp 0 diverge (x8 blocks). So only 4 iterations per block actually run which is **32 iterations in total**.
         ```
-        threadIdx  warp-0 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
-        rhs@09 for warp-0 = [5, 4, 3, 5, 4, 3, 5, 4, 3, 5,  4,  3,  5,  4,  3,  5,  4,  3,  5,  4,  3,  5,  4,  3,  5,  4,  3,  5,  4,  3,  5,  4]
-        ------------------------------------------------------------------------------------------------------------------------------------------
-        for-up-lim warp-0 = [1, 1, 1, 1, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0]
+        for all 8 blocks:
+
+          threadIdx warp-0 = [0, 1, 2, 3, 4, 5, 6, ..., 30, 31]
+         rhs@09 for warp-0 = [5, 4, 3, 5, 4, 3, 5, ...,  5,  4]
+        ------------------------------------------------------
+        forLoopBool warp-0 = [1, 1, 1, 1, 0, 0, 0, ...,  0,  0]  # (false, true)=(0, 1)
 
         ```
-    - *ii.* Following *1.d.i.* there is one divergent warp per block making a total of 8 divergent warps in the grid.
+    - *ii.* Following *1.e.i.* there are 28 (warp 0) + 96 = 124 divergent threads per block, **992 divergent iterations**.
 
 ### Exercise 2
 
