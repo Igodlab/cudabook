@@ -62,12 +62,21 @@ Useful data is `gridDim(.x, .y, .z)=(8,1,1)` and `blockDim(.x, .y, .z)=(128,1,1)
     - *ii.* All 32 warps in the grid are divergent because even numbered thread indexes take the then path at `07` whereas odd indexes do not.
     - *iii.* Warp 0 has 16 threads active (even indexes) → 50% SIMD efficiency.
 - **1.e.** For the conditional in line `09`
-    - *i.* In every block:
+    - *i.* The right-hand side conditional at line `09`:  `rhs@09 = 5 - (i%3)` yield $\{5, 3, 4\}$ values that cycle around depending of the thread index of a warp. Which makes any thread index <= 5 divergent. That makes:
+        - All threads in warps 1-31 divergent 
+        - And threads 4-31 of warp 0 divergent as well
+        ```
+        threadIdx  warp-0 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+        rhs@09 for warp-0 = [5, 4, 3, 5, 4, 3, 5, 4, 3, 5,  4,  3,  5,  4,  3,  5,  4,  3,  5,  4,  3,  5,  4,  3,  5,  4,  3,  5,  4,  3,  5,  4]
+        ------------------------------------------------------------------------------------------------------------------------------------------
+        for-up-lim warp-0 = [1, 1, 1, 1, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0]
+
+        ```
     - *ii.* Following *1.d.i.* there is one divergent warp per block making a total of 8 divergent warps in the grid.
 
 ### Exercise 2
 
-We'll have a 1D grid of $\lceil 2000/512\rceil=4$ thread blocks each containing 512 threads thus, there will be 2048 threads in the grid.
+We'll have a 1D grid of $\text{ceil}(2000/512)=4$ thread blocks each containing 512 threads thus, there will be 2048 threads in the grid.
 
 ### Exercise 3
 
@@ -75,7 +84,7 @@ The last warp (block 3, warp 15, threadIdx 480-511, absolute threadIdx 2015-2047
 
 ### Exercise 4
 
-The 8 hypothetical threads have execution times $\vec{t}=(2.0, 2.3, 3.0, 2.8, 2.4, 1.9, 2.6, 2.9) \mu s$, respectively. The barrier for the entire block is set by the longest execution time of $t_\text{barrier}=3.0\mu s$ until then most of the threads sit idle. The problem asks for the aggregate-waiting-time percentage 
+The 8 hypothetical threads have execution times $\vec{t}=(2.0, 2.3, 3.0, 2.8, 2.4, 1.9, 2.6, 2.9) \mu s$, respectively. The barrier for the entire block is set by the longest execution time $t_\text{barrier}=3.0\mu s$ until then most of the threads sit idle. The problem asks for the aggregate-waiting-time percentage 
 
 $$
 \begin{align*}
@@ -103,15 +112,15 @@ If a SM can take up to 1536 and up to 4 thread blocks. The block configuration t
 ### Exercise 7
 
 Assume a device with SMs that can take up to 64 blocks and 2048 threads/SM. All options are possible configurations given <= 2048 threads in the grid.
-- **7.a.** 8 blocks with 128 threads each → yields 1024 threads in grid with an occupancy of $100\times 1024 / 2048 = 50$%.
-- **7.b.** 16 blocks with 64 threads each → yields 1024 threads in grid with an occupancy of $100\times 1024 / 2048 = 50$%.
-- **7.c.** 32 blocks with 32 threads each → yields 1024 threads in grid with an occupancy of $100\times 1024 / 2048 = 50$%.
-- **7.d.** 64 blocks with 32 threads each → yields 2048 threads in grid with an occupancy of $100\times 2048 / 2048 = 50$%.
-- **7.e.** 32 blocks with 64 threads each → yields 2048 threads in grid with an occupancy of $100\times 2048 / 2048 = 50$%.
+- **7.a.** 8 blocks with 128 threads each → 1024 threads in grid with an occupancy of $100\times 1024 / 2048 = 50$%.
+- **7.b.** 16 blocks with 64 threads each → 1024 threads in grid with an occupancy of $100\times 1024 / 2048 = 50$%.
+- **7.c.** 32 blocks with 32 threads each → 1024 threads in grid with an occupancy of $100\times 1024 / 2048 = 50$%.
+- **7.d.** 64 blocks with 32 threads each → 2048 threads in grid with an occupancy of $100\times 2048 / 2048 = 50$%.
+- **7.e.** 32 blocks with 64 threads each → 2048 threads in grid with an occupancy of $100\times 2048 / 2048 = 50$%.
 
 ### Exercise 8
 
-A GPU with the following hardware limits: 2048 threads/SM, 32 blocks/SM & 64K (65536) registers/SM. Assess if the following specifications reach full occupancy and if not what is the limiting factor:
+A GPU with the following hardware limits: 2048 threads/SM, 32 blocks/SM and 64K (65536) registers/SM. Assess if the following specifications reach full occupancy and if not what is the limiting factor:
 - **8.a.** The kernel uses 128 threads/block and 30 registers/thread.
 - **8.b.** The kernel uses 32 threads/block and 29 registers/thread.
 - **8.c.** The kernel uses 256 threads/block and 34 registers/thread.
