@@ -63,18 +63,18 @@ Useful data is `gridDim(.x, .y, .z)=(8,1,1)` and `blockDim(.x, .y, .z)=(128,1,1)
     - *iii.* Warp 0 has 16 threads active (even indexes) → 50% SIMD efficiency.
 - **1.e.** For the conditional in line `09`
     - *i.* The right-hand side conditional at line `09`:  `rhs@09 = 5 - (i%3)` yields values {5, 3, 4} that cycle around depending on the thread index of a warp. Which makes any thread index >= 5 divergent. That is:
-        - All threads in warps 1-4 diverge in any of the 8 blocks.
-        - And threads 4-31 of warp 0 diverge (x8 blocks). So only 4 iterations per block actually run which is **32 iterations in total**.
+        - All threads in warps 1-3 diverge in any of the 8 blocks.
+        - And threads 4-31 of warp 0 diverge (x8 blocks). So only 4 iterations per block actually run → **32 iterations in total**.
         ```
         for all 8 blocks:
 
           threadIdx warp-0 = [0, 1, 2, 3, 4, 5, 6, ..., 30, 31]
          rhs@09 for warp-0 = [5, 4, 3, 5, 4, 3, 5, ...,  5,  4]
-        ------------------------------------------------------
+        -------------------------------------------------------
         forLoopBool warp-0 = [1, 1, 1, 1, 0, 0, 0, ...,  0,  0]  # (false, true)=(0, 1)
 
         ```
-    - *ii.* Following *1.e.i.* there are 28 (warp 0) + 96 = 124 divergent threads per block, **992 divergent iterations**.
+    - *ii.* Following *1.e.i.* there are 28 (warp 0) + 96 (warps 1-3) = 124 divergent threads per block → **992 divergent iterations**.
 
 ### Exercise 2
 
@@ -92,7 +92,7 @@ $$
 \begin{align*}
 100\times\sum_i (t_\text{barrier} - t_i)/t_\text{barrier} &= \frac{100}{8t_\text{barrier}}\sum(1.0, 0.7, 0.0, 0.2, 0.6, 1.1, 0.4, 0.1) \\
 &=100\times\frac{4.1}{24} \\
-&=17.08 \%
+&=17.08 \% \textdiscount
 \end{align*}
 $$ 
 
