@@ -92,7 +92,7 @@ $$
 \begin{align*}
 100\times\sum_i (t_\text{barrier} - t_i)/t_\text{barrier} &= \frac{100}{8t_\text{barrier}}\sum(1.0, 0.7, 0.0, 0.2, 0.6, 1.1, 0.4, 0.1) \\
 &=100\times\frac{4.1}{24} \\
-&=17.08 \% \textdiscount
+&=17.08 /%\% \textdiscount
 \end{align*}
 $$ 
 
