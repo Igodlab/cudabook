@@ -7,6 +7,7 @@
 
 | # | Concepts illustrated |
 |------|----------------------|
+| [Query devie properties](#query-device-properties) | CUDA script to query device(s) properties |
 | [Exercise 1](#exercise-1) | Number of warps per block, grid and SIMD efficiency |
 | [Exercise 2](#exercise-2) | Dot product per thread, 1D grid design |
 | [Exercise 3](#exercise-3) | Interpreting launch configs, counting total threads |
@@ -16,6 +17,36 @@
 | [Exercise 7](#exercise-7) | Row-major addressing for rank-3 tensors |
 | [Exercise 8](#exercise-8) | Row-major addressing for rank-3 tensors |
 | [Exercise 9](#exercise-9) | Row-major addressing for rank-3 tensors |
+
+---
+
+## Book Examples
+
+### Query Device Properties
+
+[device_properties.cu](device_properties.cu) queries the properties of all GPU devices available as described in Section 4.8 of the book. In my case a humble RTX 4070 laptop GPU:
+
+```
+./build/ch04_device_properties
+Detected 1 CUDA capable device(s)
+
+Device 0: "NVIDIA GeForce RTX 4070 Laptop GPU"
+  Major revision number:         8
+  Minor revision number:         9
+  Total amount of global memory: 7.65 GB
+  Number of multiprocessors:     36
+  Total amount of constant memory: 65536 bytes
+  Total amount of shared memory per block: 49152 bytes
+  Total number of registers available per block: 65536
+  Warp size:                     32
+  Maximum number of threads per block: 1024
+  Maximum sizes of each dimension of a block: 1024 x 1024 x 64
+  Maximum sizes of each dimension of a grid: 2147483647 x 65535 x 65535
+  Clock rate:                    1.98 GHz
+  Memory clock rate:             8001.000488 MHz
+  Memory bus width:              128-bit
+  L2 cache size:                 33554432 bytes
+```
 
 ---
 
@@ -86,7 +117,7 @@ The last warp (block 3, warp 15, threadIdx 480-511, absolute threadIdx 2015-2047
 
 ### Exercise 4
 
-The 8 hypothetical threads have execution times $\vec{t}=(2.0, 2.3, 3.0, 2.8, 2.4, 1.9, 2.6, 2.9) \mu s$, respectively. The barrier for the entire block is set by the longest execution time $t_\text{barrier}=3.0\mu s$ until then most of the threads sit idle. The problem asks for the aggregate-waiting-time percentage 
+The 8 hypothetical threads have execution times $\vec{t}=(2.0, 2.3, 3.0, 2.8, 2.4, 1.9, 2.6, 2.9) \mu s$ , respectively. The barrier for the entire block is set by the longest execution time $t_\text{barrier}=3.0\mu s$ until then most of the threads sit idle. The problem asks for the aggregate-waiting-time percentage 
 
 $$
 \begin{align*}
@@ -126,7 +157,9 @@ A GPU with the following hardware limits: 2048 threads/SM, 32 blocks/SM and 64K 
 - **8.a.** The kernel uses 128 threads/block and 30 registers/thread. Full occupancy would be $\text{num-threads/max-num-threads}=\text{num-threads}/2048=1$ here we have:
 
 > The *real physical hardware constraint* is the number of registers per SM (65536) so we will check for it first.
+> 
 > The 32 blocks/SM and 2048 threads/SM are *architectural constraints* capped at these values according to other hardware limitations like warp scheduler that tracks block state (barrier counts, block IDs, synchronization status). 
+> 
 > That bookkeeping hardware has a fixed number of slots that cannot be exceeded, regardless of how lightweight the blocks are.
 
 Lets compute max threads that can be distributed in 65536 registers/SM:
@@ -141,7 +174,7 @@ $$
 \frac{1}{128}\frac{\text{block}}{\text{threads}} \times 2048\frac{\text{threads}}{\text{SM}} = 16\frac{\text{blocks}}{\text{SM}}
 $$
 
-this condition is met (less than 32 blocks/SM). So this configuration can throughput
+this condition is met (less than 32 blocks/SM). So this configuration can achieve a throughput of
 
 $$
 128\frac{\text{threads}}{\text{block}} \times 16\frac{\text{blocks}}{\text{SM}} = 2048 \frac{\text{threads}}{\text{SM}} \rightarrow \text{occupancy} = 100\times\frac{2048}{2048} = 100\%
@@ -153,7 +186,7 @@ $$
 32 \frac{\text{threads}}{\text{block}} \times 32\frac{\text{blocks}}{\text{SM}} = 1024 \frac{\text{threads}}{\text{SM}} \rightarrow \text{occupancy} = 100\times\frac{1024}{2048} = 50\%
 $$
 
-- **8.c.** The kernel uses 256 threads/block and 34 registers/thread. This configuration demands 1927 threads/SM and 7 blocks/SM which meets hardware constraints. Reallistically it can throughput 
+- **8.c.** The kernel uses 256 threads/block and 34 registers/thread. This configuration demands 1927 threads/SM and 7 blocks/SM which meets hardware constraints. Reallistically it can achieve a throughput of
 
 $$
 256\frac{\text{threads}}{\text{block}} \times 7\frac{\text{blocks}}{\text{SM}} = 1792 \frac{\text{threads}}{\text{SM}} \rightarrow \text{occupancy} = 100\times\frac{1792}{2048} = 87.5\%

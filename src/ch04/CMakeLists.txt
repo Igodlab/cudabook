@@ -14,7 +14,7 @@ find_package(CUDAToolkit REQUIRED)
 # -----------------------------------------------------------------------
 function(add_ch04_exercise target source)
     add_executable(${target} ${source})
-    # target_link_libraries(${target} PRIVATE ch04_utils CUDA::cudart)
+    target_link_libraries(${target} PRIVATE CUDA::cudart)
     set_target_properties(${target} PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
