@@ -194,4 +194,6 @@ $$
 
 ### Exercise 9
 
+A student claims that he managed to multiply two 1024 x 1024 matrices using a matmul kernel of 32 x 32 blocks (one output matrix element per thread). He used a CUDA device with limits of 512 threads/block and 8 blocks/SM.
 
+It is not possible to solve the matmul dimensions with the student's device. `blockDim = (32, 32, 1)` thus `gridDim = (32, 32, 1)`. One element per thread means that 1024 x 1024 = 1048576 threads need to be computed. The student's grid is well defined in terms of warps, it launches (32 x 32) x (32 x 32) = 1048576 threads. However, his device cannot support it since its limmit is 512 threads/block (much less than the intended 32 x 32 = 1024 threads/block requirement). The 8 blocks/SM constraint doesn't even come into relevance in this problem.
