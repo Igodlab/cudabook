@@ -143,8 +143,8 @@ we do meet the constraint therefore we have full occupancy!
 $$
 32 \frac{\text{threads}}{\text{block}} \times 32\frac{\text{blocks}}{\text{SM}} = 1024 \frac{\text{threads}}{\text{SM}} \rightarrow \text{occupancy} = 100\times\frac{1024}{2048} = 50
 $$
-%
-- **8.c.** The kernel uses 256 threads/block and 34 registers/thread.
+
+- **8.c.** The kernel uses 256 threads/block and 34 registers/thread. This configuration demands 1927 threads/SM and 7 blocks/SM which meets hardware constraints and runs at 1927 / 2048 = 94% occupancy
 
 ### Exercise 9
 
