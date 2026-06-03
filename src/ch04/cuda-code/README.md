@@ -7,16 +7,16 @@
 
 | # | Concepts illustrated |
 |------|----------------------|
-| [Query devie properties](#query-device-properties) | CUDA script to query device(s) properties |
+| [Query Device Properties](#query-device-properties) | CUDA script to query device(s) properties |
 | [Exercise 1](#exercise-1) | Number of warps per block, grid and SIMD efficiency |
-| [Exercise 2](#exercise-2) | Dot product per thread, 1D grid design |
-| [Exercise 3](#exercise-3) | Interpreting launch configs, counting total threads |
-| [Exercise 4](#exercise-4) | Row-major vs column-major element addressing |
-| [Exercise 5](#exercise-5) | Row-major addressing for rank-3 tensors |
-| [Exercise 6](#exercise-6) | Row-major addressing for rank-3 tensors |
-| [Exercise 7](#exercise-7) | Row-major addressing for rank-3 tensors |
-| [Exercise 8](#exercise-8) | Row-major addressing for rank-3 tensors |
-| [Exercise 9](#exercise-9) | Row-major addressing for rank-3 tensors |
+| [Exercise 2](#exercise-2) | Threads in 1D grid |
+| [Exercise 3](#exercise-3) | Divergent warps due to boundary conditions |
+| [Exercise 4](#exercise-4) | Aggregate thread waiting time to barrier in warp |
+| [Exercise 5](#exercise-5) | Conceptual understanding of `__syncthreads()` usage |
+| [Exercise 6](#exercise-6) | Dynamic resource partitioning and occupancy |
+| [Exercise 7](#exercise-7) | Resource partitioning and limits (block & thread level) |
+| [Exercise 8](#exercise-8) | Resource partitioning and limits (block, thread & register level) |
+| [Exercise 9](#exercise-9) | Resource allocation |
 
 ---
 
