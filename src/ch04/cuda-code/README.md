@@ -125,13 +125,17 @@ Assume a device with SMs that can take up to 64 blocks and 2048 threads/SM. All 
 A GPU with the following hardware limits: 2048 threads/SM, 32 blocks/SM and 64K (65536) registers/SM. Assess if the following specifications reach full occupancy and if not what is the limiting factor:
 - **8.a.** The kernel uses 128 threads/block and 30 registers/thread. Full occupancy would be $\text{num-threads/max-num-threads}=\text{num-threads}/2048=1$ here we have:
     - The *real hardware constraint is the number of registers* depending on how many of them we allocate to each thread the max number of threads/SM is flexible. Lets compute max threads that can be distributed in 65536 registers/SM:
+
     $$
     65536\frac{\text{registers}}{\text{SM}} \times \frac{\text{thread}}{30\text{registers}} = \text{floor}(2184.5333) \rightarrow 2184 \frac{\text{threads}}{\text{SM}} 
     $$
+
     - Given our hardware constraints we can fit up to 32 blocks/SM, lets check if we meet this 
+
     $$
     \frac{1}{128}\frac{block}{\text{threads}} \times 2184\frac{\text{threads}}{\text{SM}} = \text{floor}(17.0625) = 17\frac{\text{blocks}}{\text{SM}}
     $$
+
     - we do meet the constraint therefore we have full occupancy!
     
 - **8.b.** The kernel uses 32 threads/block and 29 registers/thread.
