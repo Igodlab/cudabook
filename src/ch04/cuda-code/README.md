@@ -92,7 +92,7 @@ $$
 \begin{align*}
 100\times\sum_i (t_\text{barrier} - t_i)/t_\text{barrier} &= \frac{100}{8t_\text{barrier}}\sum(1.0, 0.7, 0.0, 0.2, 0.6, 1.1, 0.4, 0.1) \\
 &=100\times\frac{4.1}{24} \\
-&=17.08 \text{\%} \text{%}
+&=17.08 \%
 \end{align*}
 $$ 
 
@@ -124,27 +124,40 @@ Assume a device with SMs that can take up to 64 blocks and 2048 threads/SM. All 
 
 A GPU with the following hardware limits: 2048 threads/SM, 32 blocks/SM and 64K (65536) registers/SM. Assess if the following specifications reach full occupancy and if not what is the limiting factor:
 - **8.a.** The kernel uses 128 threads/block and 30 registers/thread. Full occupancy would be $\text{num-threads/max-num-threads}=\text{num-threads}/2048=1$ here we have:
-    - The *real hardware constraint is the number of registers* depending on how many of them we allocate to each thread the max number of threads/SM is flexible. Lets compute max threads that can be distributed in 65536 registers/SM:
+
+> The *real physical hardware constraint* is the number of registers per SM (65536) so we will check for it first.
+> The 32 blocks/SM and 2048 threads/SM are *architectural constraints* capped at these values according to other hardware limitations like warp scheduler that tracks block state (barrier counts, block IDs, synchronization status). 
+> That bookkeeping hardware has a fixed number of slots that cannot be exceeded, regardless of how lightweight the blocks are.
+
+Lets compute max threads that can be distributed in 65536 registers/SM:
 
 $$
 65536\frac{\text{registers}}{\text{SM}} \times \frac{1}{30}\frac{\text{thread}}{\text{registers}} = \text{floor}(2184.5333) = 2184 \frac{\text{threads}}{\text{SM}} 
 $$
 
-Given our hardware constraints we can fit up to 32 blocks/SM, lets check if we meet this 
+since it exceeds the constraint it'll be automatically capped at 2048 threads/SM. Lets now check the block/SM constraint 
 
 $$
-\frac{1}{128}\frac{\text{block}}{\text{threads}} \times 2184\frac{\text{threads}}{\text{SM}} = \text{floor}(17.0625) = 17\frac{\text{blocks}}{\text{SM}}
+\frac{1}{128}\frac{\text{block}}{\text{threads}} \times 2048\frac{\text{threads}}{\text{SM}} = 16\frac{\text{blocks}}{\text{SM}}
 $$
 
-we do meet the constraint therefore we have full occupancy!
-    
-- **8.b.** The kernel uses 32 threads/block and 29 registers/thread. Same procedure as *8.a.* this configuration demands → 2259 threads/SM and 70 blocks/SM which exceeds the 32 block/SM constraint. Realistically this configuration can only operate at 
+this condition is met (less than 32 blocks/SM). So this configuration can throughput
 
 $$
-32 \frac{\text{threads}}{\text{block}} \times 32\frac{\text{blocks}}{\text{SM}} = 1024 \frac{\text{threads}}{\text{SM}} \rightarrow \text{occupancy} = 100\times\frac{1024}{2048} = 50
+128\frac{\text{threads}}{\text{block}} \times 16\frac{\text{blocks}}{\text{SM}} = 2048 \frac{\text{threads}}{\text{SM}} \rightarrow \text{occupancy} = 100\times\frac{2048}{2048} = 100\%
 $$
 
-- **8.c.** The kernel uses 256 threads/block and 34 registers/thread. This configuration demands 1927 threads/SM and 7 blocks/SM which meets hardware constraints and runs at 1927 / 2048 = 94% occupancy
+- **8.b.** The kernel uses 32 threads/block and 29 registers/thread. Same procedure as *8.a.* this configuration demands → 2259 threads/SM (capped at 2048) and 64 blocks/SM (capped at 32). Realistically this configuration can only operate at 
+
+$$
+32 \frac{\text{threads}}{\text{block}} \times 32\frac{\text{blocks}}{\text{SM}} = 1024 \frac{\text{threads}}{\text{SM}} \rightarrow \text{occupancy} = 100\times\frac{1024}{2048} = 50\%
+$$
+
+- **8.c.** The kernel uses 256 threads/block and 34 registers/thread. This configuration demands 1927 threads/SM and 7 blocks/SM which meets hardware constraints. Reallistically it can throughput 
+
+$$
+256\frac{\text{threads}}{\text{block}} \times 7\frac{\text{blocks}}{\text{SM}} = 1792 \frac{\text{threads}}{\text{SM}} \rightarrow \text{occupancy} = 100\times\frac{1792}{2048} = 87.5\%
+$$
 
 ### Exercise 9
 
