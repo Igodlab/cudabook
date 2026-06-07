@@ -18,3 +18,4 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Add a line here each time you start a new chapter
 add_subdirectory(src/ch03)
 add_subdirectory(src/ch04)
+add_subdirectory(src/ch05)
