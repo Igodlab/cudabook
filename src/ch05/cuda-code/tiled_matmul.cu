@@ -21,19 +21,28 @@ __global__ void SquareMatmulTiled(
   int row = by * TILE + ty;
 
   /* Loop over */
-  float acc = 0;
-  for (int ph = 0; ph < n/TILE; ++ph) {
-    /* Collaborative loading of M, N */
-    Mds[ty][tx] = M[row*n + ph*TILE + tx];
-    Nds[ty][tx] = N[ph*TILE*n + ty*n + col];
+  float acc = 0.0f;
+  for (int ph = 0; ph < ceil(n/(float)TILE); ++ph) {
+    /* Collaborative loading of M, N 
+     * with boundary conditions
+     */
+    if (row < n && (ph*TILE + tx) < n) {
+      Mds[ty][tx] = M[ph*TILE + row*n + tx];
+    } else Mds[ty][tx] = 0.0f;
+
+    if (col < n && (ph*TILE + ty) < n) {
+      Nds[ty][tx] = N[ph*TILE*n + ty*n + col];
+    } else Nds[ty][tx] = 0.0f;
     __syncthreads();
 
-    for (int k = 0; k < n; ++k) {
+    for (int k = 0; k < TILE; ++k) {
       acc += Mds[ty][k] * Nds[k][tx];
     }
     __syncthreads();
   }
-  P[row*n + col] = acc;
+  if (row < n && col < n) {
+    P[row*n + col] = acc;
+  }
 }
 
 int main(void) {
@@ -74,9 +83,9 @@ int main(void) {
   cudaMemcpy(M_d, M.data(), matByteDim, cudaMemcpyHostToDevice);
   cudaMemcpy(N_d, N.data(), matByteDim, cudaMemcpyHostToDevice);
 
-  dim3 dimGrid(ceil(m/16.0), ceil(n/16.0), 1);
-  dim3 dimBlock(16, 16, 1);
-  MatrixMulKernel<<<dimGrid, dimBlock>>>(M_d, N_d, P_d, n, m);
+  dim3 dimGrid(ceil(m/(float)TILE), ceil(n/(float)TILE), 1);
+  dim3 dimBlock(TILE, TILE, 1);
+  SquareMatmulTiled<<<dimGrid, dimBlock>>>(M_d, N_d, P_d, n);
 
   cudaMemcpy(P.data(), P_d, matByteDim, cudaMemcpyDeviceToHost);
 
