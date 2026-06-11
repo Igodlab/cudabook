@@ -24,14 +24,14 @@ __global__ void SquareMatmulTiled(
   float acc = 0.0f;
   for (int ph = 0; ph < ceil(n/(float)TILE); ++ph) {
     /* Collaborative loading of M, N 
-     * with boundary conditions
+     * boundary conditions for tiles
      */
     if (row < n && (ph*TILE + tx) < n) {
-      Mds[ty][tx] = M[ph*TILE + row*n + tx];
+      Mds[ty][tx] = M[row*n + tx + ph*TILE];
     } else Mds[ty][tx] = 0.0f;
 
     if (col < n && (ph*TILE + ty) < n) {
-      Nds[ty][tx] = N[ph*TILE*n + ty*n + col];
+      Nds[ty][tx] = N[(ty + ph*TILE)*n + col];
     } else Nds[ty][tx] = 0.0f;
     __syncthreads();
 
@@ -40,6 +40,7 @@ __global__ void SquareMatmulTiled(
     }
     __syncthreads();
   }
+  /* Boundary conditions for output matrix */
   if (row < n && col < n) {
     P[row*n + col] = acc;
   }
