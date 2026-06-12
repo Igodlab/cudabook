@@ -8,9 +8,7 @@
 | # | Name | Concepts illustrated |
 |---|------|----------------------|
 | ... | [Notation](#notation) | We use *slow←fast* varying index (& corresponding dimension) notation | 
-| Example 1 | [Color to greysclae](#color-to-greyscale) | Grid/block model, boundary conditions, per-thread pixel mapping |
-| Example 2 | [Image blur](#image-blur) | 2D grid indexing, neighborhood access, RGB stride convention |
-| Example 3 | [Matrix multiplication](#matrix-multiplication) | One output element per thread, row-major indexing, BLAS fundamentals |
+| Example 1 | [Tiled matmul](#example-1) | Grid/block model, boundary conditions, per-thread pixel mapping |
 | Exercise 1 | [Row/Column matmul variants](#exercise-1) | One output row or column per thread, coalescing tradeoffs |
 | Exercise 2 | [Matrix-vector multiplication](#exercise-2) | Dot product per thread, 1D grid design |
 | Exercise 3 | [Grid and block dimensions](#exercise-3) | Interpreting launch configs, counting total threads |
@@ -21,30 +19,63 @@
 
 ## Book Examples
 
-### Color to greyscale 
+### Example 1
 
 
-[color_to_grey.cu](color_to_grey.cu) shows how to get started with the grids and blocks GPU model using an example of converting a color image to greyscale. The problem introduces the use of boundary conditions in our kernel to account for excess threads larger than image pixels. We use [unspecific notation](#notation) with manual handling of the rgb channel dimension.
+[tiled_matmul.cu](tiled_matmul.cu) improves on Chapter 3's matmul introducing *tiles* to reduce the number of reads from global memory. Tiles basically improve bandwidth by `TILE` dimension times by cooperatively loading a subset of input data to `__shared__` memory (sope is a thread block). The working logic is exemplified in the figure below
+
+<img src="../../../images/ch05/tiled-matmul.png" width="100%">
+
+example of kernel:
+
+```cuda
+#define TILE 16
+
+__global__ void SquareMatmulTiled(
+    float* M,
+    float* N,
+    float* P,
+    int n)
+{
+  __shared__ float Mds[TILE][TILE];
+  __shared__ float Nds[TILE][TILE];
+
+  int bx = blockIdx.x;  int by = blockIdx.y;
+  int tx = threadIdx.x; int ty = threadIdx.y;
+
+  int col = bx * TILE + tx;
+  int row = by * TILE + ty;
+
+  /* Loop over */
+  float acc = 0.0f;
+  for (int ph = 0; ph < ceil(n/(float)TILE); ++ph) {
+    /* Collaborative loading of M, N 
+     * boundary conditions for tiles
+     */
+    if (row < n && (ph*TILE + tx) < n) {
+      Mds[ty][tx] = M[row*n + tx + ph*TILE];
+    } else Mds[ty][tx] = 0.0f;
+
+    if (col < n && (ph*TILE + ty) < n) {
+      Nds[ty][tx] = N[(ty + ph*TILE)*n + col];
+    } else Nds[ty][tx] = 0.0f;
+    __syncthreads();
+
+    for (int k = 0; k < TILE; ++k) {
+      acc += Mds[ty][k] * Nds[k][tx];
+    }
+    __syncthreads();
+  }
+  /* Boundary conditions for output matrix */
+  if (row < n && col < n) {
+    P[row*n + col] = acc;
+  }
+}
+```
 
 ---
 
 ## Exercises
 
 ### Exercise 1
-
-[ch03_ex01.cu](ch03_ex01.cu) shows two kernel variants for matrix multiplication where $M\in\mathbb{R}^{n\times p}$ and $N \in \mathbb{R}^{p\times m}$:
-
-- **1.a** — one thread computes an entire output row-vector `A[row][:]` $\leftarrow \left[\sum_k^{p-1} M_{\text{row},k}N_{k,0}, \ldots, \sum_k^{p-1} M_{\text{row},k}N_{k,m-1}\right]$
-- **1.b** — one thread computes an entire output column-vector `B[:][col]` $\leftarrow \left[\sum_k^{p-1} M_{0,k}N_{k,\text{col}}, \ldots, \sum_k^{p-1} M_{n-1,k}N_{k,\text{col}}\right]^T$
-- **1.c** - Neither is optimal. Both carry one uncoalesced access pattern. The tiled shared memory approach (Ch. 5) resolves this
-
-
-### Exercise 5
-
-Given a 3D tensor $M\in\mathbb{R}^{p\times n\times m}$ in row-major order the rightmost index varies fastest, so the strides are:
-- $k$ (depth) has stride $m \times p$
-- $j$ (height) has stride $m$
-- $i$ (width) has stride $1$
-
-So the element `T[z=5][y=20][x=10]` of a $(p,n,m)=(300, 500, 400)$ tensor is accessed (in row-major) as `T[5*(400*500) + 20*400 + 10] = T[1008010]`
 
