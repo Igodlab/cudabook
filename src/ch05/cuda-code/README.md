@@ -7,7 +7,6 @@
 
 | # | Name | Concepts illustrated |
 |---|------|----------------------|
-| ... | [Notation](#notation) | We use *slow←fast* varying index (& corresponding dimension) notation | 
 | Example 1 | [Tiled matmul](#example-1) | Grid/block model, boundary conditions, per-thread pixel mapping |
 | Exercise 1 | [Row/Column matmul variants](#exercise-1) | One output row or column per thread, coalescing tradeoffs |
 | Exercise 2 | [Matrix-vector multiplication](#exercise-2) | Dot product per thread, 1D grid design |
@@ -22,7 +21,7 @@
 ### Example 1
 
 
-[tiled_matmul.cu](tiled_matmul.cu) improves on Chapter 3's matmul introducing *tiles* to reduce the number of reads from global memory. Tiles basically improve bandwidth by `TILE` dimension times by cooperatively loading a subset of input data to `__shared__` memory (sope is a thread block). The working logic is exemplified in the figure below
+[tiled_matmul.cu](tiled_matmul.cu) improves on Chapter 3's matmul introducing *tiles* to reduce the number of reads from global memory. Tiles basically improve bandwidth by `TILE` dimension times by cooperatively loading a subset of input data to `__shared__` memory (scope is a thread block). The working logic is exemplified in the figure below
 
 <img src="../../../images/ch05/tiled-matmul.png" width="100%">
 
@@ -78,4 +77,13 @@ __global__ void SquareMatmulTiled(
 ## Exercises
 
 ### Exercise 1
+
+Matrix addition is performed elelemt by element (in-place) therefore we can use shared memory to cooperatively load from tiles to reduce global memory bandwidth consumption if we change our thread configuration ie. one thread computes an entire column/row output vector. Otherwise, if we instruct a thread to produce one output element we cannot leverage shared memory usage.
+
+### Exercise 2
+
+<img src="../../../images/ch05/ch05_ex02-sol.png" width="100%">
+
+### Exercise 3
+
 
