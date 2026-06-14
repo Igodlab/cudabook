@@ -1,26 +1,19 @@
 let SessionLoad = 1
 let s:so_save = &g:so | let s:siso_save = &g:siso | setg so=0 siso=0 | setl so=-1 siso=-1
 let v:this_session=expand("<sfile>:p")
+doautoall SessionLoadPre
 silent only
 silent tabonly
-cd ~/Documents/cs/pmpp/src/ch02/cuda-notes
+cd ~/Documents/cs/pmpp/src/ch05/cuda-code
 if expand('%') == '' && !&modified && line('$') <= 1 && getline(1) == ''
   let s:wipebuf = bufnr('%')
 endif
 let s:shortmess_save = &shortmess
-if &shortmess =~ 'A'
-  set shortmess=aoOA
-else
-  set shortmess=aoO
-endif
-badd +2 ~/Documents/cs/pmpp/src/ch02/cuda-notes/vector_addition.cu
-badd +9 ~/Documents/cs/pmpp/src/ch02/cuda-notes/image_blur.cu
-badd +1 ~/Documents/cs/pmpp/pixi.toml
+set shortmess+=aoO
+badd +7 ~/Documents/cs/pmpp/src/ch05/cuda-code/README.md
 argglobal
 %argdel
-set stal=2
-tabnew +setlocal\ bufhidden=wipe
-tabrewind
+edit ~/Documents/cs/pmpp/src/ch05/cuda-code/README.md
 wincmd t
 let s:save_winminheight = &winminheight
 let s:save_winminwidth = &winminwidth
@@ -29,28 +22,6 @@ set winheight=1
 set winminwidth=0
 set winwidth=1
 argglobal
-enew
-file oil:///home/igodlab/Documents/cs/pmpp/
-balt ~/Documents/cs/pmpp/src/ch02/cuda-notes/vector_addition.cu
-setlocal foldmethod=manual
-setlocal foldexpr=0
-setlocal foldmarker={{{,}}}
-setlocal foldignore=#
-setlocal foldlevel=0
-setlocal foldminlines=1
-setlocal foldnestmax=20
-setlocal foldenable
-tabnext
-edit ~/Documents/cs/pmpp/src/ch02/cuda-notes/image_blur.cu
-wincmd t
-let s:save_winminheight = &winminheight
-let s:save_winminwidth = &winminwidth
-set winminheight=0
-set winheight=1
-set winminwidth=0
-set winwidth=1
-argglobal
-balt ~/Documents/cs/pmpp/src/ch02/cuda-notes/vector_addition.cu
 setlocal foldmethod=manual
 setlocal foldexpr=0
 setlocal foldmarker={{{,}}}
@@ -61,14 +32,13 @@ setlocal foldnestmax=20
 setlocal foldenable
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 9 - ((8 * winheight(0) + 10) / 20)
+let s:l = 34 - ((33 * winheight(0) + 18) / 36)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 9
+keepjumps 34
 normal! 0
-tabnext 2
-set stal=1
+tabnext 1
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0 && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
   silent exe 'bwipe ' . s:wipebuf
 endif

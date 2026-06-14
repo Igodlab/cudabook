@@ -13,6 +13,13 @@
 | Exercise 3 | [Grid and block dimensions](#exercise-3) | Interpreting launch configs, counting total threads |
 | Exercise 4 | [2D flat indexing](#exercise-4) | Row-major vs column-major element addressing |
 | Exercise 5 | [3D flat indexing](#exercise-5) | Row-major addressing for rank-3 tensors |
+| Exercise 6 | [3D flat indexing](#exercise-6) | Row-major addressing for rank-3 tensors |
+| Exercise 7 | [3D flat indexing](#exercise-7) | Row-major addressing for rank-3 tensors |
+| Exercise 8 | [3D flat indexing](#exercise-8) | Row-major addressing for rank-3 tensors |
+| Exercise 9 | [3D flat indexing](#exercise-9) | Row-major addressing for rank-3 tensors |
+| Exercise 10 | [3D flat indexing](#exercise-10) | Row-major addressing for rank-3 tensors |
+| Exercise 11 | [3D flat indexing](#exercise-11) | Row-major addressing for rank-3 tensors |
+| Exercise 12 | [3D flat indexing](#exercise-12) | Row-major addressing for rank-3 tensors |
 
 ---
 
@@ -87,7 +94,7 @@ Matrix addition is performed elelemt by element (in-place) therefore we can use 
 ### Exercise 3
 
 If no `__syncthreads()` are placed after *(i)* cooperatively tile load step and *(ii)* output value accumulator calculation step for every phase; our code will fail *read-after-write & write-after-read dependences*. Meaning that:
-- we could have incomplete tile loads like uninitialized values or zeroes in dynamically and statically sized tiles, respectively. 
+- we could have incomplete tile loads like uninitialized values or old values in dynamically and statically-sized tiles, respectively. 
 - we could be writing corrupted values to any output element `accumulator`
 
 ### Exercise 4
@@ -133,7 +140,8 @@ dim3 blockDim(BLOCK_WIDTH, BLOCK_WIDTH);
 dim3 gridDim(A_width/blockDim.x, A_height/blockDim.y);
 BlockTranspose<<<gridDim, blockDim>>>(A, A_width, A_height)
 
-__global__ BlockTranspose(float* A_elements, int A_width, int A_height)
+__global__ void
+BlockTranspose(float* A_elements, int A_width, int A_height)
 {
   __shared__ float blockA[BLOCK_WIDTH][BLOCK_WIDTH];
 
@@ -143,5 +151,32 @@ __global__ BlockTranspose(float* A_elements, int A_width, int A_height)
   blockA[threadIdx.y][threadIdx.x] = A_elements[baseIdx];
   
   A_elements[baseIdx] = blockA[threadIdx.x][threadIdx.y];
+}
+```
+
+As we've seen in [Exercise 3](#exercise-3) **10.b.** if we ommit a `__syncthreads()` after cooperative tile loading to `__shared__` memory, then we're making our code vulnerable to *read-after-write* failures. **10.a.** Thus the code will only run with guarantees for `BLOCK_WIDTH = 1;` 
+
+### Exercise 11
+
+```cuda
+__global__ void foo_kernel(float* a, float* b) {
+  unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
+  float x[4];
+  __shared__ float y_s;
+  __shared__ float b_s[128];
+  for (unsigned int j = 0; j < 4; ++j) {
+    x[j] = a[j*blocks.x*gridDim.x + i];
+  }
+  if (threadIdx.x == 0) {
+    y_s = 7.4f;
+  }
+  b_s[threadIdx.x] = b[i];
+  __syncthreads();
+  b[i] = 2.5f*x[0] + 3.7f*x[1] + 6.3f*x[2] + 8.5f*[3]
+         + y_s*b_s[threadIdx.x] + b_s[(threadIdx.x + 3)%128];
+}
+void foo(int* a_d, int* b_d) {
+  unsigned int \texttts{N} = 1024;
+  foo_kernel <<< (N + 128 - 1)/128, 128 >>>(a_d, b_d);
 }
 ```
