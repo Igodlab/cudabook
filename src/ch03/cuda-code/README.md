@@ -56,7 +56,7 @@ For the first two examples we use the same input matrix (with rgb channels so te
 
 <img src="../../../images/ch03/opeth-sorceress-grey.png" width="30%">
 
-```cuda
+```cpp
 __global__ void coloToGrayscaleConvertion(
     unsigned char *Pout,
     unsigned char *Pin,
@@ -93,7 +93,7 @@ __global__ void coloToGrayscaleConvertion(
 
 <img src="../../../images/ch03/opeth-sorceress-blur.png" width="30%">
 
-```cuda
+```cpp
 __global__ void imageBlur(
     unsigned char* Pin,
     unsigned char* Pout,
@@ -134,7 +134,7 @@ __global__ void imageBlur(
 
 [matrix_multiplication.cu](matrix_multiplication.cu) is the fundamental BLAS example. One output matrix element per thread. Each thread computes the dot product of one row of M and one column of N.
 
-```cuda
+```cpp
 __global__ void MatrixMulKernel(
     float* M,
     float* N,
@@ -170,7 +170,7 @@ __global__ void MatrixMulKernel(
 
 <img src="../../../images/ch03/ch03_ex01-sol.png" width="100%">
 
-```cuda
+```cpp
 /* A - write a kernel that has each thread produce one output matrix row */
 __global__ void matmulRowKernel(
     float* M, /* \in R^{n x p} */
@@ -225,7 +225,7 @@ __global__ void matmulColKernel(
 ### Exercise 2
 [ch03_ex02.cu](ch03_ex02.cu) kernel where each thread computes one full dot product between a square matrix row `B[row][:]` and the input vector `c`. Grid is 1D over the number of matrix rows.
 
-```cuda
+```cpp
 __global__ void matVecKernel(
     float* B,
     float* c,
@@ -252,7 +252,7 @@ Given the following kernel and configuration execution parameters `bd(16,32)` & 
 - *c)* 95 grids
 - *d)* The threads that execute the code in line `05` are $M\times N=45000$ (which means that there is 3640 inactive threads)
 
-```cuda
+```cpp
 __global__ void foo_kernel(float* a , float* b , unsigned int M, unsigned int N) {
     unsigned int row = blockIdx.y*blockDim.y + threadIdx.y;
     unsigned int col = blockIdx.x*blockDim.x + threadIdx.x;
