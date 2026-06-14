@@ -27,7 +27,7 @@
 
 example of kernel:
 
-```cpp
+```cuda
 #define TILE 16
 
 __global__ void SquareMatmulTiled(
@@ -128,7 +128,7 @@ Given the following device properties at peak capacity:
 
 ### Exercise 10
 
-```cpp
+```cuda
 dim3 blockDim(BLOCK_WIDTH, BLOCK_WIDTH);
 dim3 gridDim(A_width/blockDim.x, A_height/blockDim.y);
 BlockTranspose<<<gridDim, blockDim>>>(A, A_width, A_height)
