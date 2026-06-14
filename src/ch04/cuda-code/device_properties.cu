@@ -23,7 +23,7 @@ int main(void) {
     printf("  Total amount of global memory: %.2f GB\n", (float)devProp.totalGlobalMem / (1024 * 1024 * 1024));
     printf("  Number of multiprocessors:     %d\n", devProp.multiProcessorCount);
     printf("  Total amount of constant memory: %lu bytes\n", devProp.totalConstMem);
-    printf("  Total amount of shared memory per block: %lu bytes\n", devProp.sharedMemPerBlock);
+    printf("  Total amount of shared memory per SM: %lu bytes\n", devProp.sharedMemPerBlock);
     printf("  Total number of registers available per block: %d\n", devProp.regsPerBlock);
     printf("  Warp size:                     %d\n", devProp.warpSize);
     printf("  Maximum number of threads per block: %d\n", devProp.maxThreadsPerBlock);
