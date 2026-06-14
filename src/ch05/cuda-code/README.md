@@ -114,6 +114,12 @@ Performing squared matmul of dimensions $N \times N$ every element of the input 
 
 ### Exercise 9
 
-A kernel performs 36 FLOP and 7 4-Bytes global memory reads per thread. Given the following device properties at peak capacity:
-- **9.a.** 200 GFLOPS & 100 GB/s - yields a *compute-intensity* of 2 FLOP/B 
-- **9.b.** 300 GFLOPS & 250 GB/s - gives 1.2 FLOP/B *compute-intensity* 
+A kernel performs 36 FLOP and 7 4-Bytes global memory reads per thread which gives a *computational-intensisty* of
+$$
+\frac{36 \text{ FLOP}}{7\times 4 \text{ B}} = 1.29 \text{ FLOP/B}
+$$
+Given the following device properties at peak capacity:
+- **9.a.** 200 GFLOPS & 100 GB/s - yields a *compute-intensity* of $2 \text{ FLOP/B}(> 1.29 \text{ FLOP/B}) which indicates that the kernel is memory-bound
+- **9.b.** 300 GFLOPS & 250 GB/s - gives 1.2 FLOP/B *compute-intensity* so the kernel is compute-bound
+
+
