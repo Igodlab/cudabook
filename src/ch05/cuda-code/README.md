@@ -27,7 +27,7 @@
 
 example of kernel:
 
-```cuda
+```cpp
 #define TILE 16
 
 __global__ void SquareMatmulTiled(
@@ -110,33 +110,37 @@ Defining Exercise 6's varible from local to shared memory will make the program 
 
 Performing squared matmul of dimensions $N \times N$ every element of the input matrices is requested from gobal memory:
 - **8.a.** $2N^2$ times without tiling.
-- **8.b.** $3N^2/T$ with $T\times T$ tiling.
+- **8.b.** $2N^2/T$ with $T\times T$ tiling.
 
 ### Exercise 9
 
-A kernel performs 36 FLOP and 7 4-Bytes global memory reads per thread which gives a *computational-intensisty* of
+A kernel performs 36 FLOP and 7 4-Bytes global memory reads per thread which gives a *computational-intensity* of
 
 $$
 \frac{36 \text{ FLOP}}{7\times 4 \text{ B}} = 1.29 \text{ FLOP/B}
 $$
 
+<img src="../../../images/ch05/roofline-model.png", width="50%">
+
 Given the following device properties at peak capacity:
 - **9.a.** 200 GFLOPS & 100 GB/s - yields a *compute-intensity* of $2 \text{ FLOP/B}(> 1.29 \text{ FLOP/B})$ which indicates that the kernel is *memory-bound*.
-- **9.b.** 300 GFLOPS & 250 GB/s - gives $1.2 FLOP/B(< 1.29 \text{ FLOP/B})$ *compute-intensity* so the kernel is *compute-bound*.
+- **9.b.** 300 GFLOPS & 250 GB/s - gives $1.2 \text{FLOP/B}(< 1.29 \text{ FLOP/B})$ *compute-intensity* so the kernel is *compute-bound*.
 
 ### Exercise 10
 
-```cuda
+```cpp
 dim3 blockDim(BLOCK_WIDTH, BLOCK_WIDTH);
 dim3 gridDim(A_width/blockDim.x, A_height/blockDim.y);
 BlockTranspose<<<gridDim, blockDim>>>(A, A_width, A_height)
+
+__global__ BlockTranspose(float* A_elements, int A_width, int A_height)
 {
   __shared__ float blockA[BLOCK_WIDTH][BLOCK_WIDTH];
 
   int baseIdx = blockIdx.x * BLOCK_SIZE + threadIdx.x;
   baseIdx += (blockIdx.y * BLOCK_SIZE + threadIdx.y) * A_width;
 
-  blockA[thradIdx.y][threadIdx.x] = A_elements[]baseIdx;
+  blockA[threadIdx.y][threadIdx.x] = A_elements[baseIdx];
   
   A_elements[baseIdx] = blockA[threadIdx.x][threadIdx.y];
 }
