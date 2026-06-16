@@ -19,11 +19,11 @@ __global__ void matmulKernel(
   /* relative indexes ty, tx (wrt blocks) 
    * absolute indexes y, x 
    */
-  int tx = threadIdx.x; int bx = blockIdx.x; int dbx = blockDim.x;
-  int ty = threadIdx.y; int by = blockIdx.y; int dby = blockDim.y;
+  int tx = threadIdx.x; int bx = blockIdx.x;
+  int ty = threadIdx.y; int by = blockIdx.y;
 
-  int x = tx +  bx*dbx;
-  int y = ty +  by*dby;
+  int x = tx +  bx * blockDim.x;
+  int y = ty +  by * blockDim.y;
 
   /* Iterate for each tile phase */
   float acc = 0.0f;
