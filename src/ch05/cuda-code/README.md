@@ -129,7 +129,7 @@ $$
 
 Given the following device properties at peak capacity:
 
-<img src="../../../images/ch05/roofline-model.png", width="50%">
+<img src="../../../images/ch05/roofline-model.png" width="50%">
 
 - **9.a.** 200 GFLOPS & 100 GB/s - yields a *compute-intensity* of $2 \text{ FLOP/B}(> 1.29 \text{ FLOP/B})$ which indicates that the kernel is *memory-bound*.
 - **9.b.** 300 GFLOPS & 250 GB/s - gives $1.2 \text{FLOP/B}(< 1.29 \text{ FLOP/B})$ *compute-intensity* so the kernel is *compute-bound*.
@@ -155,7 +155,7 @@ BlockTranspose(float* A_elements, int A_width, int A_height)
 }
 ```
 
-As we've seen in [Exercise 3](#exercise-3) **10.b.** if we ommit a `__syncthreads()` after cooperative tile loading to `__shared__` memory, then we're making our code vulnerable to *read-after-write* failures. **10.a.** Thus the code will only run with guarantees for `BLOCK_WIDTH = 1;` 
+As we've seen in [Exercise 3](#exercise-3) **10.b.** if we ommit a `__syncthreads()` after cooperative tile loading to `__shared__` memory, then we're making our code vulnerable to *read-after-write* failures. **10.a.** Thus, the code will only run with guarantees for `BLOCK_WIDTH = 1` 
 
 ### Exercise 11
 

@@ -54,7 +54,7 @@ int main(void) {
   int m = 1000;
   int n = m;
 
-  /* Iniitialize matrices as flat vectors */
+  /* Initialize matrices as flat vectors */
   std::vector<float> M(m * n);
   std::vector<float> N(m * n);
   std::vector<float> P(m * n);
