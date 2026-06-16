@@ -1,9 +1,12 @@
 #include "utils.hpp"
+
 #include <cassert>
+#include <filesystem>
+#include <fstream>
 #include <iomanip>
+#include <iostream>
 #include <optional>
 #include <stdexcept>
-#include <iostream>
 #include <vector>
 
 void printVec(const float* V, int n, std::optional<int> cap) {
@@ -78,3 +81,34 @@ void printMatrixFlat(const std::vector<float>& M, int rows, int cols, const std:
     }
 }
 
+namespace fs = std::filesystem;
+void save_matrix_csv(const std::string& filename,
+                     const std::vector<float>& data,
+                     int rows,
+                     int cols,
+                     const std::string& out_dir,
+                     int precision)
+{
+    if (static_cast<int>(data.size()) != rows * cols)
+        throw std::runtime_error(
+            "save_matrix_csv: data.size() (" + std::to_string(data.size()) +
+            ") != rows*cols (" + std::to_string(rows * cols) + ")");
+ 
+    // create out/ (and any parents) if they don't exist yet
+    fs::create_directories(out_dir);
+ 
+    const std::string path = out_dir + "/" + filename;
+    std::ofstream f(path);
+    if (!f.is_open())
+        throw std::runtime_error("save_matrix_csv: cannot open file: " + path);
+ 
+    f << std::fixed << std::setprecision(precision);
+ 
+    for (int r = 0; r < rows; ++r) {
+        for (int c = 0; c < cols; ++c) {
+            f << data[r * cols + c];
+            if (c + 1 < cols) f << ',';
+        }
+        f << '\n';
+    }
+}
