@@ -6,10 +6,10 @@ find_package(CUDAToolkit REQUIRED)
 # -----------------------------------------------------------------------
 # utils — scoped within each chapter (not shared with other chapters)
 # -----------------------------------------------------------------------
-add_library(ch05_utils STATIC cuda-code/utils.cpp)
+add_library(ch05_utils STATIC utils.cpp)
 
 target_include_directories(ch05_utils PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/cuda-code   # utils.hpp visible to all ch05 targets
+  ${CMAKE_CURRENT_SOURCE_DIR} # utils.hpp visible to all ch05 targets
 )
 
 target_link_libraries(ch05_utils PUBLIC
@@ -31,4 +31,5 @@ endfunction()
 # -----------------------------------------------------------------------
 # cuda-code targets — one line each
 # -----------------------------------------------------------------------
-add_ch05_exercise(ch05_tiled_matmul    cuda-code/tiled_matmul.cu)
+add_ch05_exercise(ch05_tiled_matmul           tiled_matmul.cu)
+add_ch05_exercise(ch05_efficient_tiled_matmul efficient_tiled_matmul.cu)

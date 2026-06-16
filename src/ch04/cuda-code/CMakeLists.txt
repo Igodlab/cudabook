@@ -24,5 +24,4 @@ endfunction()
 # -----------------------------------------------------------------------
 # cuda-code targets — one line each
 # -----------------------------------------------------------------------
-add_ch04_exercise(ch04_device_properties    cuda-code/device_properties.cu)
-add_ch04_exercise(ch04_opti_ch03_ex01       cuda-code/ch04_opti_ch03_ex01.cu)
+add_ch04_exercise(ch04_device_properties device_properties.cu)

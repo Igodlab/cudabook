@@ -16,6 +16,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ── Chapters ────────────────────────────────────────────────────────────────
 # Add a line here each time you start a new chapter
-add_subdirectory(src/ch03)
-add_subdirectory(src/ch04)
-add_subdirectory(src/ch05)
+add_subdirectory(src/ch03/cuda-code)
+add_subdirectory(src/ch04/cuda-code)
+add_subdirectory(src/ch05/cuda-code)
