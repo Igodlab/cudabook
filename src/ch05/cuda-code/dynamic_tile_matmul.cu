@@ -61,9 +61,9 @@ int main(void) {
    * M \in d1 x _d
    * P \in d1 x d0
    */
-  int d0 = 1000;
-  int _d = 1000;
-  int d1 = 1000;
+  int d0 = 4000;
+  int _d = 3000;
+  int d1 = 5000;
 
   /* random fill input matrices */
   std::vector<float> P(d1 * d0);
@@ -103,7 +103,7 @@ int main(void) {
   cudaMemcpy(N_d, N.data(), Nsz, cudaMemcpyHostToDevice);
   cudaMemcpy(M_d, M.data(), Msz, cudaMemcpyHostToDevice);
 
-  dim3 dg((d0 + TILE - 1)/TILE, (d1 + TILE - 1)/TILE, 1);
+  dim3 dg((max(d0, _d) + TILE - 1)/TILE, (max(_d, d1) + TILE - 1)/TILE, 1);
   dim3 db(TILE, TILE, 1);
   size_t sharedMemBytes = 2 * TILE * TILE * sizeof(float);
   matmulKernel<<<dg, db, sharedMemBytes>>>(M_d, N_d, P_d, d0, _d, d1);
