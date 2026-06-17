@@ -112,3 +112,53 @@ void save_matrix_csv(const std::string& filename,
         f << '\n';
     }
 }
+
+std::vector<float> read_matrix_csv(const std::string& filename,
+                                   int rows,
+                                   int cols,
+                                   const std::string& out_dir)
+{
+    fs::path full_path = fs::path(out_dir) / filename;
+    std::ifstream f(full_path);
+    if (!f.is_open())
+        throw std::runtime_error(
+            "read_matrix_csv: cannot open file: " + full_path.string());
+ 
+    std::vector<float> data;
+    data.reserve(rows * cols);
+ 
+    std::string line;
+    int r = 0;
+    while (std::getline(f, line)) {
+        if (line.empty()) continue;
+        if (r >= rows)
+            throw std::runtime_error(
+                "read_matrix_csv: more rows in file than expected (" +
+                std::to_string(rows) + ")");
+ 
+        std::istringstream ss(line);
+        std::string token;
+        int c = 0;
+        while (std::getline(ss, token, ',')) {
+            if (c >= cols)
+                throw std::runtime_error(
+                    "read_matrix_csv: more columns in row " + std::to_string(r) +
+                    " than expected (" + std::to_string(cols) + ")");
+            data.push_back(std::stof(token));
+            ++c;
+        }
+        if (c != cols)
+            throw std::runtime_error(
+                "read_matrix_csv: row " + std::to_string(r) + " has " +
+                std::to_string(c) + " columns, expected " + std::to_string(cols));
+        ++r;
+    }
+ 
+    if (r != rows)
+        throw std::runtime_error(
+            "read_matrix_csv: file has " + std::to_string(r) +
+            " rows, expected " + std::to_string(rows));
+ 
+    return data;
+}
+

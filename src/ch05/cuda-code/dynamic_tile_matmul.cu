@@ -103,7 +103,7 @@ int main(void) {
   cudaMemcpy(N_d, N.data(), Nsz, cudaMemcpyHostToDevice);
   cudaMemcpy(M_d, M.data(), Msz, cudaMemcpyHostToDevice);
 
-  dim3 dg((max(d0, _d) + TILE - 1)/TILE, (max(_d, d1) + TILE - 1)/TILE, 1);
+  dim3 dg((d0 + TILE - 1)/TILE, (d1 + TILE - 1)/TILE, 1);
   dim3 db(TILE, TILE, 1);
   size_t sharedMemBytes = 2 * TILE * TILE * sizeof(float);
   matmulKernel<<<dg, db, sharedMemBytes>>>(M_d, N_d, P_d, d0, _d, d1);
@@ -114,4 +114,6 @@ int main(void) {
   cudaFree(M_d);
   cudaFree(N_d);
   cudaFree(P_d);
+
+  return 0;
 }

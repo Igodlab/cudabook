@@ -36,3 +36,22 @@ void save_matrix_csv(const std::string& filename,
                      int cols,
                      const std::string& out_dir = "data/ch05/",
                      int precision = 6);
+
+
+/**
+ * Read a row-major matrix from <out_dir>/<filename>.
+ *
+ * The CSV must have exactly `rows` lines each with exactly `cols`
+ * comma-separated values — the same format save_matrix_csv produces.
+ * Returns a flat vector in row-major order.
+ *
+ * @param filename    File name only (e.g. "M.csv")
+ * @param rows        Expected number of rows
+ * @param cols        Expected number of columns
+ * @param out_dir     Directory to read from (default "out")
+ */
+std::vector<float> read_matrix_csv(const std::string& filename,
+                                   int rows,
+                                   int cols,
+                                   const std::string& out_dir = "data/ch05/");
+
