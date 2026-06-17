@@ -31,5 +31,6 @@ endfunction()
 # -----------------------------------------------------------------------
 # cuda-code targets — one line each
 # -----------------------------------------------------------------------
-add_ch05_exercise(ch05_tiled_matmul           tiled_matmul.cu)
-add_ch05_exercise(ch05_efficient_tiled_matmul efficient_tiled_matmul.cu)
+add_ch05_exercise(ch05_tile_matmul         tile_matmul.cu)
+add_ch05_exercise(ch05_dynamic_tile_matmul dynamic_tile_matmul.cu)
+# add_ch05_exercise(ch05_optimal_tile_matmul optimal_tile_matmul.cu)

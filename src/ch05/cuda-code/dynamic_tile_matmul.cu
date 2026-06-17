@@ -17,9 +17,9 @@ __global__ void matmulKernel(
 
   float *Mds = (float *) Tld;
   float *Nds = (float *) Tld + (TILE * TILE); /* Is valid for pointer arithmetic offset operands 
-                                           * which basically is handled by the compiler as
-                                           * Nds = address_of_Tld + (TILE * TILE * sizeof(float))
-                                           */
+                                               * which basically is handled by the compiler as
+                                               * Nds = address_of_Tld + (TILE * TILE * sizeof(float))
+                                               */
 
   /* relative indexes ty, tx (wrt blocks) 
    * absolute indexes y, x 
