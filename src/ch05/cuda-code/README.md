@@ -30,7 +30,7 @@
 
 [tiled_matmul.cu](tiled_matmul.cu) improves on Chapter 3's matmul introducing *tiles* to reduce the number of reads from global memory. Tiles basically improve bandwidth by `TILE` dimension times by cooperatively loading a subset of input data to `__shared__` memory (scope is a thread block). The working logic is exemplified in the figure below
 
-<img src="../../../images/ch05/tiled-matmul.png" width="100%">
+<img src="../../../images/ch05/tiled_matmul.png" width="100%">
 
 example of kernel:
 

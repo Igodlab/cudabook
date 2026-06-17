@@ -13,8 +13,13 @@ __global__ void matmulKernel(
     int _d,
     int d1)
 {
-  __shared__ float Msd[TILE * TILE];
-  __shared__ float Nsd[TILE * TILE];
+  extern __shared__ float Tld[];
+
+  float *Mds = (float *) Tld;
+  float *Nds = (float *) Tld + (TILE * TILE); /* Is valid for pointer arithmetic offset operands 
+                                           * which basically is handled by the compiler as
+                                           * Nds = address_of_Tld + (TILE * TILE * sizeof(float))
+                                           */
 
   /* relative indexes ty, tx (wrt blocks) 
    * absolute indexes y, x 
@@ -22,31 +27,31 @@ __global__ void matmulKernel(
   int tx = threadIdx.x; int bx = blockIdx.x;
   int ty = threadIdx.y; int by = blockIdx.y;
 
-  int x = tx +  bx * blockDim.x;
-  int y = ty +  by * blockDim.y;
+  int x = tx +  bx * TILE;
+  int y = ty +  by * TILE;
 
   /* Iterate for each tile phase */
   float acc = 0.0f;
   for (int h = 0; h < ceil(_d/(float)TILE); ++h) {
-    /* load to Msd, Nsd tile w/ boundary checks */
+    /* load to Mds, Nds tile w/ boundary checks */
     if (y < d1 && (h*TILE + tx) < _d) {
-      Msd[tx + ty*TILE] = M[tx + h*TILE + y*d0];
-    } else Msd[tx + ty*TILE] = 0.0f;
+      Mds[tx + ty*TILE] = M[tx + h*TILE + y*_d];
+    } else Mds[tx + ty*TILE] = 0.0f;
 
     if ((h*TILE + ty) < _d && x < d0) {
-      Nsd[tx + ty*TILE] = N[x + (ty + h*TILE)*d0];
-    } else Nsd[tx + ty*TILE] = 0.0f;
+      Nds[tx + ty*TILE] = N[x + (ty + h*TILE)*d0];
+    } else Nds[tx + ty*TILE] = 0.0f;
     __syncthreads();
 
     for (int k = 0; k < TILE; ++k) {
-      acc += Msd[k + ty*TILE] * Nsd[tx + k*TILE];
+      acc += Mds[k + ty*TILE] * Nds[tx + k*TILE];
     }
     __syncthreads();
+  }
 
-    /* Boundary check for output matrix */
-    if (x < d0 && y < d1) {
-      P[x + y*d0] = acc;
-    }
+  /* Boundary check for output matrix */
+  if (x < d0 && y < d1) {
+    P[x + y*d0] = acc;
   }
 }
 
@@ -88,18 +93,22 @@ int main(void) {
 
   /* CUDA prep */
   float *M_d, *N_d, *P_d;
-  cudaMalloc(&P_d, (size_t)(d1 * d0 * sizeof(float)));
-  cudaMalloc(&N_d, (size_t)(_d * d0 * sizeof(float)));
-  cudaMalloc(&M_d, (size_t)(d1 * _d * sizeof(float)));
+  size_t Psz = d1 * d0 * sizeof(float);
+  size_t Nsz = _d * d0 * sizeof(float);
+  size_t Msz = d1 * _d * sizeof(float);
+  cudaMalloc(&P_d, Psz);
+  cudaMalloc(&N_d, Nsz);
+  cudaMalloc(&M_d, Msz);
 
-  cudaMemcpy(N_d, N.data(), _d*d0*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(M_d, M.data(), d1*_d*sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(N_d, N.data(), Nsz, cudaMemcpyHostToDevice);
+  cudaMemcpy(M_d, M.data(), Msz, cudaMemcpyHostToDevice);
 
-  dim3 dg(ceil(d0/TILE), ceil(d1/TILE), 1);
+  dim3 dg((d0 + TILE - 1)/TILE, (d1 + TILE - 1)/TILE, 1);
   dim3 db(TILE, TILE, 1);
-  matmulKernel<<<dg, db>>>(M_d, N_d, P_d, d0, _d, d1);
+  size_t sharedMemBytes = 2 * TILE * TILE * sizeof(float);
+  matmulKernel<<<dg, db, sharedMemBytes>>>(M_d, N_d, P_d, d0, _d, d1);
 
-  cudaMemcpy(P.data(), P_d, d1*_d*sizeof(float), cudaMemcpyDeviceToHost);
+  cudaMemcpy(P.data(), P_d, Psz, cudaMemcpyDeviceToHost);
   save_matrix_csv("outputP.csv", P, d1, d0);
 
   cudaFree(M_d);
