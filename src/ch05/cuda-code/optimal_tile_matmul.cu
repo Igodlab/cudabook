@@ -9,7 +9,7 @@ __global__ void tileMatmulKernel(
     float *N,
     float *P,
     int d0,
-    int _d,
+    int d_,
     int d1,
     int tile)
 {
@@ -25,12 +25,12 @@ __global__ void tileMatmulKernel(
   int y = ty + by * tile;
 
   float acc = 0.0f;
-  for (int h = 0; h < (_d + tile - 1)/tile; ++h) {
-    if (y < d1 && (tx + h*tile) < _d) {
-      Mds[tx + ty*tile] = M[tx + h*tile + y*_d];
+  for (int h = 0; h < (d_ + tile - 1)/tile; ++h) {
+    if (y < d1 && (tx + h*tile) < d_) {
+      Mds[tx + ty*tile] = M[tx + h*tile + y*d_];
     } else Mds[tx + ty*tile] = 0.0f;
 
-    if (x < d0 && (ty + h*tile) < _d) {
+    if (x < d0 && (ty + h*tile) < d_) {
       Nds[tx + ty*tile] = N[x + (ty + h*tile)*d0];
     } else Nds[tx + ty*tile] = 0.0f;
     __syncthreads();
@@ -48,45 +48,45 @@ __global__ void tileMatmulKernel(
 
 int main(void) {
   /* P = MN matmul
-   * N \in _d x d0
-   * M \in d1 x _d
+   * N \in d_ x d0
+   * M \in d1 x d_
    * P \in d1 x d0
    */
   int d0 = 4000;
-  int _d = 3000;
+  int d_ = 3000;
   int d1 = 5000;
 
   /* read csv input matrices */
   const std::string data_dir = "data/ch05";
   
-  std::vector<float> M = read_matrix_csv("inputM.csv", d1, _d, data_dir);
-  std::vector<float> N = read_matrix_csv("inputN.csv", _d, d0, data_dir);
+  std::vector<float> M = read_matrix_csv("inputM.csv", d1, d_, data_dir);
+  std::vector<float> N = read_matrix_csv("inputN.csv", d_, d0, data_dir);
   std::vector<float> P(d1 * d0);
 
   /* GPU */
-  float *M_d, *N_d, *P_d;
+  float *Md_, *Nd_, *Pd_;
   size_t Psz = d1 * d0 * sizeof(float);
-  size_t Nsz = _d * d0 * sizeof(float);
-  size_t Msz = d1 * _d * sizeof(float);
+  size_t Nsz = d_ * d0 * sizeof(float);
+  size_t Msz = d1 * d_ * sizeof(float);
 
-  cudaMalloc(&P_d, Psz);
-  cudaMalloc(&N_d, Nsz);
-  cudaMalloc(&M_d, Msz);
+  cudaMalloc(&Pd_, Psz);
+  cudaMalloc(&Nd_, Nsz);
+  cudaMalloc(&Md_, Msz);
 
-  cudaMemcpy(N_d, N.data(), Nsz, cudaMemcpyHostToDevice);
-  cudaMemcpy(M_d, M.data(), Msz, cudaMemcpyHostToDevice);
+  cudaMemcpy(Nd_, N.data(), Nsz, cudaMemcpyHostToDevice);
+  cudaMemcpy(Md_, M.data(), Msz, cudaMemcpyHostToDevice);
 
   dim3 dg((d0 + tileDim - 1)/tileDim, (d1 + tileDim - 1)/tileDim, 1);
   dim3 db(tileDim, tileDim, 1);
   size_t sharedMemBytes = 2 * tileDim * tileDim * sizeof(float);
-  tileMatmulKernel<<<dg, db, sharedMemBytes>>>(M_d, N_d, P_d, d0, _d, d1, tileDim);
+  tileMatmulKernel<<<dg, db, sharedMemBytes>>>(Md_, Nd_, Pd_, d0, d_, d1, tileDim);
 
-  cudaMemcpy(P.data(), P_d, Psz, cudaMemcpyDeviceToHost);
+  cudaMemcpy(P.data(), Pd_, Psz, cudaMemcpyDeviceToHost);
   save_matrix_csv("outputP2.csv", P, d1, d0);
 
-  cudaFree(P_d);
-  cudaFree(N_d);
-  cudaFree(M_d);
+  cudaFree(Pd_);
+  cudaFree(Nd_);
+  cudaFree(Md_);
 
   return 0;
 }

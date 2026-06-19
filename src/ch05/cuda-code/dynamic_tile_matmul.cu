@@ -10,7 +10,7 @@ __global__ void matmulKernel(
     float* N,
     float* P,
     int d0,
-    int _d,
+    int d_,
     int d1)
 {
   extern __shared__ float Tld[];
@@ -32,13 +32,13 @@ __global__ void matmulKernel(
 
   /* Iterate for each tile phase */
   float acc = 0.0f;
-  for (int h = 0; h < ceil(_d/(float)TILE); ++h) {
+  for (int h = 0; h < ceil(d_/(float)TILE); ++h) {
     /* load to Mds, Nds tile w/ boundary checks */
-    if (y < d1 && (h*TILE + tx) < _d) {
-      Mds[tx + ty*TILE] = M[tx + h*TILE + y*_d];
+    if (y < d1 && (h*TILE + tx) < d_) {
+      Mds[tx + ty*TILE] = M[tx + h*TILE + y*d_];
     } else Mds[tx + ty*TILE] = 0.0f;
 
-    if ((h*TILE + ty) < _d && x < d0) {
+    if ((h*TILE + ty) < d_ && x < d0) {
       Nds[tx + ty*TILE] = N[x + (ty + h*TILE)*d0];
     } else Nds[tx + ty*TILE] = 0.0f;
     __syncthreads();
@@ -57,18 +57,18 @@ __global__ void matmulKernel(
 
 int main(void) {
   /* P = MN matmul
-   * N \in _d x d0
-   * M \in d1 x _d
+   * N \in d_ x d0
+   * M \in d1 x d_
    * P \in d1 x d0
    */
   int d0 = 4000;
-  int _d = 3000;
+  int d_ = 3000;
   int d1 = 5000;
 
   /* random fill input matrices */
   std::vector<float> P(d1 * d0);
-  std::vector<float> M(d1 * _d);
-  std::vector<float> N(_d * d0);
+  std::vector<float> M(d1 * d_);
+  std::vector<float> N(d_ * d0);
 
   float u_min = -10.0f;
   float u_max = 10.0f;
@@ -77,43 +77,43 @@ int main(void) {
   std::uniform_real_distribution<float> uniform_dist(u_min, u_max);
 
   /* random fill M */
-  for (int _i = 0; _i < _d; ++_i) {
+  for (int _i = 0; _i < d_; ++_i) {
     for (int i1 = 0; i1 < d1; ++i1) {
-      M[_i + i1*_d] = uniform_dist(rng);
+      M[_i + i1*d_] = uniform_dist(rng);
     }
   }
   /* random fill N */
   for (int i0 = 0; i0 < d0; ++i0) {
-    for (int _i = 0; _i < _d; ++_i) {
+    for (int _i = 0; _i < d_; ++_i) {
       N[i0 + _i*d0] = uniform_dist(rng);
     }
   }
-  save_matrix_csv("inputM.csv", M, d1, _d);
-  save_matrix_csv("inputN.csv", N, _d, d0);
+  save_matrix_csv("inputM.csv", M, d1, d_);
+  save_matrix_csv("inputN.csv", N, d_, d0);
 
   /* CUDA prep */
-  float *M_d, *N_d, *P_d;
+  float *Md_, *Nd_, *Pd_;
   size_t Psz = d1 * d0 * sizeof(float);
-  size_t Nsz = _d * d0 * sizeof(float);
-  size_t Msz = d1 * _d * sizeof(float);
-  cudaMalloc(&P_d, Psz);
-  cudaMalloc(&N_d, Nsz);
-  cudaMalloc(&M_d, Msz);
+  size_t Nsz = d_ * d0 * sizeof(float);
+  size_t Msz = d1 * d_ * sizeof(float);
+  cudaMalloc(&Pd_, Psz);
+  cudaMalloc(&Nd_, Nsz);
+  cudaMalloc(&Md_, Msz);
 
-  cudaMemcpy(N_d, N.data(), Nsz, cudaMemcpyHostToDevice);
-  cudaMemcpy(M_d, M.data(), Msz, cudaMemcpyHostToDevice);
+  cudaMemcpy(Nd_, N.data(), Nsz, cudaMemcpyHostToDevice);
+  cudaMemcpy(Md_, M.data(), Msz, cudaMemcpyHostToDevice);
 
   dim3 dg((d0 + TILE - 1)/TILE, (d1 + TILE - 1)/TILE, 1);
   dim3 db(TILE, TILE, 1);
   size_t sharedMemBytes = 2 * TILE * TILE * sizeof(float);
-  matmulKernel<<<dg, db, sharedMemBytes>>>(M_d, N_d, P_d, d0, _d, d1);
+  matmulKernel<<<dg, db, sharedMemBytes>>>(Md_, Nd_, Pd_, d0, d_, d1);
 
-  cudaMemcpy(P.data(), P_d, Psz, cudaMemcpyDeviceToHost);
+  cudaMemcpy(P.data(), Pd_, Psz, cudaMemcpyDeviceToHost);
   save_matrix_csv("outputP.csv", P, d1, d0);
 
-  cudaFree(M_d);
-  cudaFree(N_d);
-  cudaFree(P_d);
+  cudaFree(Md_);
+  cudaFree(Nd_);
+  cudaFree(Pd_);
 
   return 0;
 }
