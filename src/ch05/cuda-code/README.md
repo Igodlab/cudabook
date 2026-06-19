@@ -30,7 +30,7 @@
 
 [tiled_matmul.cu](tiled_matmul.cu) improves on Chapter 3's matmul introducing *tiles* to reduce the number of reads from global memory. Tiles basically improve bandwidth by `TILE` dimension times by cooperatively loading a subset of input data to `__shared__` memory (scope is a thread block). The working logic is exemplified in the figure below
 
-<img src="../../../images/ch05/tiled_matmul.png" width="100%">
+<img src="../../../images/ch05/tiled-matmul.png" width="100%">
 
 example of kernel:
 
@@ -177,7 +177,18 @@ __global__ void foo_kernel(float* a, float* b) {
          + y_s*b_s[threadIdx.x] + b_s[(threadIdx.x + 3)%128];
 }
 void foo(int* a_d, int* b_d) {
-  unsigned int \texttts{N} = 1024;
+  unsigned int N = 1024;
   foo_kernel <<< (N + 128 - 1)/128, 128 >>>(a_d, b_d);
 }
 ```
+
+- **11.a.** - there are `gridDim.x * blockDim.x = 8 * 128 = 1024` threads and versions of `i` in total.
+- **11.b.** - one `x[]` per thread so 1024.
+- **11.c.** - there are as many versions of `y_s` as thread blocks → 128.
+- **11.d.** - one shared memory `y_s` per thread block so 128.
+- **11.e.** - the amount of used shared memory per thread block is `sizeof(y_s) + sizeof(b_s) = 4 B + (128 * 4) B = 516 B`.
+- **11.f.** - each thread makes 4 + 
+
+### Exercise 12
+
+

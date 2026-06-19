@@ -1,8 +1,7 @@
 #include <cuda_runtime.h>
-
+#include <stdio.h>
 #include "utils.hpp"
-
-const unsigned tileDim = 32;
+#include "device_properties.cuh"
 
 __global__ void tileMatmulKernel(
     float *M,
@@ -55,10 +54,12 @@ int main(void) {
   int d0 = 4000;
   int d_ = 3000;
   int d1 = 5000;
+  int tileDim = getOptimalTileDim(d1, d_, d0);
+  printf("Optimal tileDim %i", tileDim);
 
   /* read csv input matrices */
   const std::string data_dir = "data/ch05";
-  
+
   std::vector<float> M = read_matrix_csv("inputM.csv", d1, d_, data_dir);
   std::vector<float> N = read_matrix_csv("inputN.csv", d_, d0, data_dir);
   std::vector<float> P(d1 * d0);
