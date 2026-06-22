@@ -30,7 +30,7 @@
 
 [tiled_matmul.cu](tiled_matmul.cu) improves on Chapter 3's matmul introducing *tiles* to reduce the number of reads from global memory. Tiles basically improve bandwidth by `TILE` dimension times by cooperatively loading a subset of input data to `__shared__` memory (scope is a thread block). The working logic is exemplified in the figure below
 
-<img src="../../../images/ch05/tiled-matmul.png" width="100%">
+<img src="../../../images/ch05/tile-matmul.png" width="100%">
 
 example of kernel:
 
@@ -121,16 +121,15 @@ Performing squared matmul of dimensions $N \times N$ every element of the input 
 
 ### Exercise 9
 
-A kernel performs 36 FLOP and 7 4-Bytes global memory reads per thread which gives a *computational-intensity* of
+A kernel performs 36 FLOP and 7 4-Bytes global memory reads per thread which gives a *compute-intensity* of
 
 $$
 \frac{36 \text{ FLOP}}{7\times 4 \text{ B}} = 1.29 \text{ FLOP/B}
 $$
 
+<img src="../../../images/ch05/roofline-model.png" width="40%">
+
 Given the following device properties at peak capacity:
-
-<img src="../../../images/ch05/roofline-model.png" width="50%">
-
 - **9.a.** 200 GFLOPS & 100 GB/s - yields a *compute-intensity* of $2 \text{ FLOP/B}(> 1.29 \text{ FLOP/B})$ which indicates that the kernel is *memory-bound*.
 - **9.b.** 300 GFLOPS & 250 GB/s - gives $1.2 \text{FLOP/B}(< 1.29 \text{ FLOP/B})$ *compute-intensity* so the kernel is *compute-bound*.
 
