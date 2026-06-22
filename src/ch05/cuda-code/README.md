@@ -191,4 +191,29 @@ void foo(int* a_d, int* b_d) {
 
 ### Exercise 12
 
+Conisder a GPU with the following limits: 2048 threads/SM, 32 blocks/SM, 64 K (65536) registers/SM & 96 KB of shared-memory/SM. For each of the following kernel characteristics specify if full occupancy is posible, otherwise specify the limiting factor:
+- **12.a.** - The kernel uses 64 threads/block, 27 registers/thread & 4 KB shared-memory/SM. We have to check if these characteristics are below the limit or if they need to be capped:
 
+$$
+\begin{align*}
+&2048\frac{\text{threads}}{\text{SM}} \times 27 \frac{\text{registers}}{\text{thread}} = 55296 \frac{\text{registers}}{\text{SM}} && \left(\leq 65536 \frac{\text{registers}}{\text{SM}} \right) \\
+&32 \frac{\text{blocks}}{\text{SM}} \times 4 \text{KB} \frac{\text{shared-mem}}{\text{block}} = 128 \text{KB} \frac{\text{shared-mem}}{\text{SM}} && \left(\nleq 96 \text{KB} \frac{\text{shared-mem}}{\text{SM}}\right) \\
+&\rightarrow\frac{1}{4\text{KB}} \frac{\text{SM}}{\text{shared-mem}} \times 96 \text{KB} \frac{\text{shared-mem}}{\text{SM}} = 24 \frac{\text{blocks}}{\text{SM}} && \left(\text{capped}\right) \\
+&64 \frac{\text{threads}}{\text{block}} \times 24 \frac{\text{blocks}}{\text{SM}} = 1536 \frac{\text{threads}}{\text{SM}} && \left(\leq 2048 \frac{\text{threads}}{\text{SM}}\right)\\
+\end{align*}
+$$
+
+due to the blocks/SM cap the kernel reaches $1536/2048 \times 100 = 75$% occupancy.
+
+- **12.b.** - The kernel uses 256 threads/block, 31 registers/thread & 8 KB shared-memory/SM. Simiar to *12.a.*
+
+$$
+\begin{align*}
+&256 \frac{\text{threads}}{\text{block}} \times 32 \frac{\text{blocks}}{\text{SM}} = 8192 \frac{\text{threads}}{\text{SM}} && \left(\nleq 2048 \frac{\text{threads}}{\text{SM}}\right)\\
+&\rightarrow\frac{1}{256} \frac{\text{block}}{\text{threads}} \times 2048\frac{\text{threads}}{\text{SM}} = 8 \frac{\text{blocks}}{\text{SM}} && \left(\text{capped}\right)\\
+&2048\frac{\text{threads}}{\text{SM}} \times 31 \frac{\text{registers}}{\text{thread}} = 63488 \frac{\text{registers}}{\text{SM}} && \left(\leq 65536 \frac{\text{registers}}{\text{SM}} \right) \\
+&8 \frac{\text{blocks}}{\text{SM}} \times 8 \text{KB} \frac{\text{shared-mem}}{\text{block}} = 64 \text{KB} \frac{\text{shared-mem}}{\text{SM}} && \left(\leq 96 \text{KB} \frac{\text{shared-mem}}{\text{SM}}\right)
+\end{align*}
+$$
+
+kernel specs are within the harware limits thus it reaches 100% occupancy!
