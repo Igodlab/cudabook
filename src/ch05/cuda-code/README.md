@@ -82,7 +82,7 @@ __global__ void SquareMatmulTiled(
 }
 ```
 
-### Exercise 2
+### Example 2
 
 [dynamic_tile_matmul.cu](dynamic_tile_matmul.cu) improves on [tile_matmul.cu](tile_matmul.cu) by declaring one contiguous dynamically allocated tile variable for cooperative loading both M and N matrices. 
 
@@ -140,7 +140,7 @@ __global__ void matmulKernel(
 }
 ```
 
-### Exercise 3
+### Example 3
 
 [optimal_tile_matmul.cu](optimal_tile_matmul.cu) improves on [dynamic_tile_matmul.cu](dynamic_tile_matmul.cu) by calling [device_properties.cuh](device_properties.cuh) helper script to automatically compute the optimal tile dimension based on the hardware available.  
 
