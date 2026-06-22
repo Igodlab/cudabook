@@ -7,19 +7,21 @@
 
 | # | Name | Concepts illustrated |
 |---|------|----------------------|
-| Example 1 | [Tiled matmul](#example-1) | Grid/block model, boundary conditions, per-thread pixel mapping |
-| Exercise 1 | [Row/Column matmul variants](#exercise-1) | One output row or column per thread, coalescing tradeoffs |
-| Exercise 2 | [Matrix-vector multiplication](#exercise-2) | Dot product per thread, 1D grid design |
-| Exercise 3 | [Grid and block dimensions](#exercise-3) | Interpreting launch configs, counting total threads |
-| Exercise 4 | [2D flat indexing](#exercise-4) | Row-major vs column-major element addressing |
-| Exercise 5 | [3D flat indexing](#exercise-5) | Row-major addressing for rank-3 tensors |
-| Exercise 6 | [3D flat indexing](#exercise-6) | Row-major addressing for rank-3 tensors |
-| Exercise 7 | [3D flat indexing](#exercise-7) | Row-major addressing for rank-3 tensors |
-| Exercise 8 | [3D flat indexing](#exercise-8) | Row-major addressing for rank-3 tensors |
-| Exercise 9 | [3D flat indexing](#exercise-9) | Row-major addressing for rank-3 tensors |
-| Exercise 10 | [3D flat indexing](#exercise-10) | Row-major addressing for rank-3 tensors |
-| Exercise 11 | [3D flat indexing](#exercise-11) | Row-major addressing for rank-3 tensors |
-| Exercise 12 | [3D flat indexing](#exercise-12) | Row-major addressing for rank-3 tensors |
+| Example 1 | [Tiled matmul](#example-1) | Cooperative tiling for GEMM w/ static tile dimensions |
+| Example 2 | [Matmul w/ dynamic tile dim](#example-2) | Cooperative tiling for GEMM w/ dynamic tile dimensions |
+| Example 3 | [Matmul w/ optimal tile dim](#example-3) | Cooperative tiling for GEMM w/ optimal tile dimensions based on hardware limitations |
+| Exercise 1 | [Matrix addition](#exercise-1) | Tiling in matrix addition gives no benefits |
+| Exercise 2 | [Tiling drawings](#exercise-2) | 8x8 matmul with 2x2 & 4x4 tiling drawings exemplify the efficient memory read factor |
+| Exercise 3 | [Importance of `__syncthreads()`](#exercise-3) | Ommiting `__syncthreads()` results in read-after-write & write-after-read failures |
+| Exercise 4 | [Benefits of shared memory](#exercise-4) | Even if registers would have near infinite capacity shared memory is still benefitial |
+| Exercise 5 | [Reduction of memory bandwidth](#exercise-5) | Reduction of global memory reads factor is the tile dimension |
+| Exercise 6 | [Local variable declaration in kernel](#exercise-6) | Local variable scope is at thread-level |
+| Exercise 7 | [Shared memory variable declaration in kernel](#exercise-7) | Variable loaded to shared memory has thread-block-level scope |
+| Exercise 8 | [Memory bandwidth w/ & w/o tiling](#exercise-8) | Reduction of global memory reads factor is the tile dimension |
+| Exercise 9 | [Compute- or memory-bound](#exercise-9) | Roofline model for determining compute-bound and/or memory bound regimes |
+| Exercise 10 | [`__syncthreads()` missing](#exercise-10) | Code example with no `__syncthreads()` forces tile dimension > 1 to be inefective |
+| Exercise 11 | [Computational throughput and memory bandwidth](#exercise-11) | Different variable scopes and compute-intensity [OPerations/Byte] |
+| Exercise 12 | [Occupancy, kernels & hardware specs](#exercise-12) | Occupancy dependence on kernel specs and hardware limitations |
 
 ---
 
@@ -28,7 +30,8 @@
 ### Example 1
 
 
-[tiled_matmul.cu](tiled_matmul.cu) improves on Chapter 3's matmul introducing *tiles* to reduce the number of reads from global memory. Tiles basically improve bandwidth by `TILE` dimension times by cooperatively loading a subset of input data to `__shared__` memory (scope is a thread block). The working logic is exemplified in the figure below
+[tile_matmul.cu](tile_matmul.cu) improves on Chapter 3's matmul introducing *tiles* to reduce the number of reads from global memory. Tiles basically improve bandwidth by `TILE` dimension times by cooperatively loading a subset of input data to `__shared__` memory (scope is a thread block). The working logic is exemplified in the figure below
+
 
 <img src="../../../images/ch05/tile-matmul.png" width="100%">
 
@@ -79,6 +82,68 @@ __global__ void SquareMatmulTiled(
 }
 ```
 
+### Exercise 2
+
+[dynamic_tile_matmul.cu](dynamic_tile_matmul.cu) improves on [tile_matmul.cu](tile_matmul.cu) by declaring one contiguous dynamically allocated tile variable for cooperative loading both M and N matrices. 
+
+```cuda
+#define TILE 32
+
+__global__ void matmulKernel(
+    float* M,
+    float* N,
+    float* P,
+    int d0,
+    int d_,
+    int d1)
+{
+  extern __shared__ float Tld[];
+
+  float *Mds = (float *) Tld;
+  float *Nds = (float *) Tld + (TILE * TILE); /* Is valid for pointer arithmetic offset operands 
+                                               * which basically is handled by the compiler as
+                                               * Nds = address_of_Tld + (TILE * TILE * sizeof(float))
+                                               */
+
+  /* relative indexes ty, tx (wrt blocks) 
+   * absolute indexes y, x 
+   */
+  int tx = threadIdx.x; int bx = blockIdx.x;
+  int ty = threadIdx.y; int by = blockIdx.y;
+
+  int x = tx +  bx * TILE;
+  int y = ty +  by * TILE;
+
+  /* Iterate for each tile phase */
+  float acc = 0.0f;
+  for (int h = 0; h < ceil(d_/(float)TILE); ++h) {
+    /* load to Mds, Nds tile w/ boundary checks */
+    if (y < d1 && (h*TILE + tx) < d_) {
+      Mds[tx + ty*TILE] = M[tx + h*TILE + y*d_];
+    } else Mds[tx + ty*TILE] = 0.0f;
+
+    if ((h*TILE + ty) < d_ && x < d0) {
+      Nds[tx + ty*TILE] = N[x + (ty + h*TILE)*d0];
+    } else Nds[tx + ty*TILE] = 0.0f;
+    __syncthreads();
+
+    for (int k = 0; k < TILE; ++k) {
+      acc += Mds[k + ty*TILE] * Nds[tx + k*TILE];
+    }
+    __syncthreads();
+  }
+
+  /* Boundary check for output matrix */
+  if (x < d0 && y < d1) {
+    P[x + y*d0] = acc;
+  }
+}
+```
+
+### Exercise 3
+
+[optimal_tile_matmul.cu](optimal_tile_matmul.cu) improves on [dynamic_tile_matmul.cu](dynamic_tile_matmul.cu) by calling [device_properties.cuh](device_properties.cuh) helper script to automatically compute the optimal tile dimension based on the hardware available.  
+
 ---
 
 ## Exercises
@@ -99,7 +164,7 @@ If no `__syncthreads()` are placed after *(i)* cooperatively tile load step and 
 
 ### Exercise 4
 
-Ignoring register and shared memory capacity limitations - shared memory is still beneficial because is shared accross all threads in the same block as opposed to registers which are evenly allocated accross all threads in SM. So even in the hypothetical case of registers having the capacity to store arbitrary-large variables these would have to be read from global memory for every thread which is expensive.
+Assuming register and shared memory capacity limitations were not an issue - *shared memory* is still beneficial because is shared accross all threads in the same block as opposed to registers which are evenly allocated accross all threads in SM. So even in the hypothetical case of registers having the capacity to store arbitrary-large variables these would have to be read from global memory for every thread which is expensive.
 
 ### Exercise 5
 
@@ -111,7 +176,7 @@ Variables defined in local memory have thread-level scope so the 1000-block kern
 
 ### Exercise 7
 
-Defining Exercise 6's varible from local to shared memory will make the program create such variable 1000 times (once every block).
+Declaring Exercise 6's local-variable into shared memory will make the program create such variable 1000 times (once every thread-block).
 
 ### Exercise 8
 
