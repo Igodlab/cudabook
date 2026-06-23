@@ -154,7 +154,7 @@ Matrix addition is performed elelemt by element (in-place) therefore we can use 
 
 ### Exercise 2
 
-<img src="../../../images/ch05/ch05_ex02-sol.png" width="100%">
+<img src="../../../images/ch05/ch05-ex02-sol.png" width="100%">
 
 ### Exercise 3
 
@@ -251,7 +251,7 @@ void foo(int* a_d, int* b_d) {
 - **11.c.** - there are as many versions of `y_s` as thread blocks → 128.
 - **11.d.** - one shared memory `y_s` per thread block so 128.
 - **11.e.** - the amount of used shared memory per thread block is `sizeof(y_s) + sizeof(b_s) = 4 B + (128 * 4) B = 516 B`.
-- **11.f.** - each thread makes 4 + 
+- **11.f.** - to obtain the floating point to global memory access ratio of the kernel (in OP/B) we need to count both number of operations and number of memory reads.
 
 ### Exercise 12
 
