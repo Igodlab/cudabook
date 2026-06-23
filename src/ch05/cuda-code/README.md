@@ -224,26 +224,26 @@ As we've seen in [Exercise 3](#exercise-3) **10.b.** if we ommit a `__syncthread
 ### Exercise 11
 
 ```cuda
-__global__ void foo_kernel(float* a, float* b) {
-  unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
-  float x[4];
-  __shared__ float y_s;
-  __shared__ float b_s[128];
-  for (unsigned int j = 0; j < 4; ++j) {
-    x[j] = a[j*blocks.x*gridDim.x + i];
-  }
-  if (threadIdx.x == 0) {
-    y_s = 7.4f;
-  }
-  b_s[threadIdx.x] = b[i];
-  __syncthreads();
-  b[i] = 2.5f*x[0] + 3.7f*x[1] + 6.3f*x[2] + 8.5f*[3]
-         + y_s*b_s[threadIdx.x] + b_s[(threadIdx.x + 3)%128];
-}
-void foo(int* a_d, int* b_d) {
-  unsigned int N = 1024;
-  foo_kernel <<< (N + 128 - 1)/128, 128 >>>(a_d, b_d);
-}
+ 1 __global__ void foo_kernel(float* a, float* b) {
+ 2   unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
+ 3   float x[4];
+ 4   __shared__ float y_s;
+ 5   __shared__ float b_s[128];
+ 6   for (unsigned int j = 0; j < 4; ++j) {
+ 7     x[j] = a[j*blocks.x*gridDim.x + i];
+ 8   }
+ 9   if (threadIdx.x == 0) {
+10     y_s = 7.4f;
+11   }
+12   b_s[threadIdx.x] = b[i];
+13   __syncthreads();
+14   b[i] = 2.5f*x[0] + 3.7f*x[1] + 6.3f*x[2] + 8.5f*[3]
+15          + y_s*b_s[threadIdx.x] + b_s[(threadIdx.x + 3)%128];
+16 }
+17 void foo(int* a_d, int* b_d) {
+18   unsigned int N = 1024;
+19   foo_kernel <<< (N + 128 - 1)/128, 128 >>>(a_d, b_d);
+20 }
 ```
 
 - **11.a.** - there are `gridDim.x * blockDim.x = 8 * 128 = 1024` threads and versions of `i` in total.
@@ -251,7 +251,8 @@ void foo(int* a_d, int* b_d) {
 - **11.c.** - there are as many versions of `y_s` as thread blocks → 128.
 - **11.d.** - one shared memory `y_s` per thread block so 128.
 - **11.e.** - the amount of used shared memory per thread block is `sizeof(y_s) + sizeof(b_s) = 4 B + (128 * 4) B = 516 B`.
-- **11.f.** - to obtain the floating point to global memory access ratio of the kernel (in OP/B) we need to count both number of operations and number of memory reads.
+- **11.f.** - to obtain the floating point to global memory access ratio of the kernel (in OP/B) we need to count both number of operations and number of memory reads:
+    - *bandwidth* - every thread performs one global memory read for `b_s[threadIdx.x] = b[i];` then two memory reads in `b[i] = ... + y_s*b_s[threadIdx.x] + b_s[(threadIdx.x +  3)%128];` 
 
 ### Exercise 12
 
