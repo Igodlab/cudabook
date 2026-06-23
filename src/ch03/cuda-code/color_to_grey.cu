@@ -37,31 +37,29 @@ int main(void) {
   size_t inBytes = img.cols * img.rows * CHANNELS;
   size_t outBytes = img.cols * img.rows;
 
-  // Allocate memory
+  /* Allocate memory */
   unsigned char *Pin_d, *Pout_d;
   cudaMalloc((void **)&Pin_d, inBytes);
   cudaMalloc((void **)&Pout_d, outBytes);
 
-  // Copy data from host to device
+  /* Copy data from host to device */
   cudaMemcpy(Pin_d, img.data, inBytes, cudaMemcpyHostToDevice);
 
-  // Launch kernel
+  /* Launch kernel */
   dim3 dimGrid(ceil(img.rows/16.0), ceil(img.cols/16.0), 1);
   dim3 dimBlock(16, 16, 1);
   coloToGrayscaleConvertion<<<dimGrid, dimBlock>>>(Pout_d, Pin_d, img.cols, img.rows);
-  // cudaDeviceSynchronize();
 
-  // Copy result back to a cv::Mat type
+  /* Copy result back to a cv::Mat type */
   cv::Mat greyMat(img.rows, img.cols, CV_8UC1);
   cudaMemcpy(greyMat.data, Pout_d, outBytes, cudaMemcpyDeviceToHost);
 
-  // Save
+  /* Save */
   saveImage("images/ch03/opeth-sorceress-grey.png", greyMat);
 
-  // Cleanup
+  /* Cleanup */
   cudaFree(Pin_d);
   cudaFree(Pout_d);
 
   return 0;
 }
-

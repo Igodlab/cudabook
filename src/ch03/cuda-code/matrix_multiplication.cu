@@ -6,7 +6,7 @@
 __global__ void MatrixMulKernel(
     float* M,
     float* N,
-    float* P,
+    float* A,
     int height,
     int width)
 {
@@ -15,11 +15,11 @@ __global__ void MatrixMulKernel(
 
   if (col < width && row < height) {
     float acc = 0;
-    /* Compute P[j][i] = \sum_k^p M[j][k] * N[k][i] */
+    /* Compute A[j][i] = \sum_k^p M[j][k] * N[k][i] */
     for (int k = 0; k < width; ++k) {
       acc += M[row*width+k] * N[k*width+col];
     }
-    P[row * width + col] = acc;
+    A[row * width + col] = acc;
   }
 }
 
@@ -32,9 +32,9 @@ int main(void) {
   int n = m;
 
   /* Iniitialize matrices as flat vectors */
-  std::vector<float> M(m * n);
-  std::vector<float> N(m * n);
-  std::vector<float> P(m * n);
+  std::vector<float> M(n * m);
+  std::vector<float> N(n * m);
+  std::vector<float> A(n * m);
 
   /* random device and values */
   float u_min = -10.0f;
@@ -52,31 +52,31 @@ int main(void) {
   }
 
   /* Prep for kernel */
-  float *M_d, *N_d, *P_d;
+  float *M_d, *N_d, *A_d;
   size_t matByteDim = n * m * sizeof(float);
   cudaMalloc(&M_d, matByteDim);
   cudaMalloc(&N_d, matByteDim);
-  cudaMalloc(&P_d, matByteDim);
+  cudaMalloc(&A_d, matByteDim);
 
   cudaMemcpy(M_d, M.data(), matByteDim, cudaMemcpyHostToDevice);
   cudaMemcpy(N_d, N.data(), matByteDim, cudaMemcpyHostToDevice);
 
   dim3 dimGrid(ceil(m/16.0), ceil(n/16.0), 1);
   dim3 dimBlock(16, 16, 1);
-  MatrixMulKernel<<<dimGrid, dimBlock>>>(M_d, N_d, P_d, n, m);
+  MatrixMulKernel<<<dimGrid, dimBlock>>>(M_d, N_d, A_d, n, m);
 
-  cudaMemcpy(P.data(), P_d, matByteDim, cudaMemcpyDeviceToHost);
+  cudaMemcpy(A.data(), A_d, matByteDim, cudaMemcpyDeviceToHost);
 
   /* Print Matrices using utils.hpp:
    * printMatrixFlat(matrix, rows, cols, name, cap(optional)) 
    */
   printMatrixFlat(M, n, m, "M", 3);
   printMatrixFlat(N, n, m, "N", 3);
-  printMatrixFlat(P, n, m, "P", 3);
+  printMatrixFlat(A, n, m, "A", 3);
 
   cudaFree(M_d);
   cudaFree(N_d);
-  cudaFree(P_d);
+  cudaFree(A_d);
 
   return 0;
 }

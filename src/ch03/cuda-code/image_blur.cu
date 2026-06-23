@@ -30,13 +30,13 @@ __global__ void imageBlur(
         int current_h = h + blurRow;
 
         if (current_w >= 0 && current_w < W && current_h >= 0 && current_h < H) {
-          /* row-major indexing: Pin[h*(C*W) + w*C + c] */
-          acc += Pin[current_h * (CHANNELS * W) + current_w * CHANNELS + c];
+          /* row-major indexing: Pin[c + w*C + h*(C*W)] */
+          acc += Pin[c + current_w*CHANNELS + current_h*(CHANNELS*W)];
           ++pixels;
         }
       }
     }
-    Pout[h * (CHANNELS * W) + w * CHANNELS + c] = (unsigned char)(acc / pixels);
+    Pout[c + w*CHANNELS + h*(CHANNELS*W)] = (unsigned char)(acc / pixels);
   }
 }
 
