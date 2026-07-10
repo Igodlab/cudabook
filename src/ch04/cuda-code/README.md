@@ -122,6 +122,7 @@ The 8 hypothetical threads have execution times
 $$
 \vec{t}=\left(2.0, 2.3, 3.0, 2.8, 2.4, 1.9, 2.6, 2.9\right) \mu s
 $$
+
 , respectively. The barrier for the entire block is set by the longest execution time $t_\text{barrier}=3.0\mu s$ until then most of the threads sit idle. The problem asks for the aggregate-waiting-time percentage
 
 $$
