@@ -77,7 +77,7 @@ Device 0: "NVIDIA GeForce RTX 4070 Laptop GPU"
 Useful data is `gridDim(.x, .y, .z)=(8,1,1)` and `blockDim(.x, .y, .z)=(128,1,1)`
 - **1.a.** There are 128 threads in each block thus, 4 warps per block.
 - **1.b.** Four warps per block means there is 32 warps in the grid (total of 8 blocks).
-- **1.c.** For the conditional of line `04`, divergence is any other path than the first 'then' path:
+- **1.c.** For the statement of line `04`, divergence is any other path than the first 'then' path:
     - *i.* In every block:
         - Warp 0 (0-31) is active, all its threads indexes are < 40.
         - Warp 1 (32-63) has only threads 32-39 active (the rest is > 40).
@@ -88,11 +88,11 @@ Useful data is `gridDim(.x, .y, .z)=(8,1,1)` and `blockDim(.x, .y, .z)=(128,1,1)
     - *iii.* Recall that SIMD efficiency is *active-threads/warp*. All 32 threads in warp 0 are active so 100%.
     - *iv.* Warp 1 has 8 active threads → 25%.
     - *v.* Warp 3 has 24 active thrads → 75%.
-- **1.d.** For the conditional in line `07`:
+- **1.d.** For the statement in line `07`:
     - *i.* All warps are active because half of its threads' indexes are even.
     - *ii.* All 32 warps in the grid are divergent because even numbered thread indexes take the then path at `07` whereas odd indexes do not.
     - *iii.* Warp 0 has 16 threads active (even indexes) → 50% SIMD efficiency.
-- **1.e.** For the conditional in line `09`
+- **1.e.** For the statement in line `09`
     - *i.* The right-hand side conditional at line `09`:  `rhs@09 = 5 - (i%3)` yields values {5, 3, 4} that cycle around depending on the thread index of a warp. Which makes any thread index >= 5 divergent. That is:
         - All threads in warps 1-3 diverge in any of the 8 blocks.
         - And threads 4-31 of warp 0 diverge (x8 blocks). So only 4 iterations per block actually run → **32 iterations in total**.
@@ -117,7 +117,12 @@ The last warp (block 3, warp 15, threadIdx 480-511, absolute threadIdx 2015-2047
 
 ### Exercise 4
 
-The 8 hypothetical threads have execution times $\vec{t}=(2.0, 2.3, 3.0, 2.8, 2.4, 1.9, 2.6, 2.9)[\mu s]:$, respectively. The barrier for the entire block is set by the longest execution time $t_\text{barrier}=3.0\mu s$ until then most of the threads sit idle. The problem asks for the aggregate-waiting-time percentage
+The 8 hypothetical threads have execution times 
+
+$$
+\vec{t}=\left(2.0, 2.3, 3.0, 2.8, 2.4, 1.9, 2.6, 2.9\right) \mu s
+$$
+, respectively. The barrier for the entire block is set by the longest execution time $t_\text{barrier}=3.0\mu s$ until then most of the threads sit idle. The problem asks for the aggregate-waiting-time percentage
 
 $$
 \begin{align*}
