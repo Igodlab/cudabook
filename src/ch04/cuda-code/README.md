@@ -55,23 +55,23 @@ Device 0: "NVIDIA GeForce RTX 4070 Laptop GPU"
 ### Exercise 1
 
 ```cuda
-__global__ void foo_kernel(int* a, int* b) {
-    unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (threadIdx.x < 40 || threadIdx.x >= 104) {
-        b[i] = a[i] + 1;
-    }
-    if (i % 2 == 0) {
-        a[i] = b[i] * 2;
-    }
-    for (unsigned int j = 0; j < 5 - (i%3); ++j) {
-        b[i] += j;
-    }
-}
-
-void foo(int* a_d, int* b_d) {
-    unsigned int N = 1024;
-    foo_kernel<<< (N + 128 - 1)/128, 128>>>(a_d, b_d);
-}
+ 1 __global__ void foo_kernel(int* a, int* b) {
+ 2     unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+ 3     if (threadIdx.x < 40 || threadIdx.x >= 104) {
+ 4         b[i] = a[i] + 1;
+ 5     }
+ 6     if (i % 2 == 0) {
+ 7         a[i] = b[i] * 2;
+ 8     }
+ 9     for (unsigned int j = 0; j < 5 - (i%3); ++j) {
+10         b[i] += j;
+11     }
+12 }
+13 
+14 void foo(int* a_d, int* b_d) {
+15     unsigned int N = 1024;
+16     foo_kernel<<< (N + 128 - 1)/128, 128>>>(a_d, b_d);
+17 }
 ```
 
 Useful data is `gridDim(.x, .y, .z)=(8,1,1)` and `blockDim(.x, .y, .z)=(128,1,1)`
