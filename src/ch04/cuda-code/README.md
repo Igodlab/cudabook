@@ -117,7 +117,7 @@ The last warp (block 3, warp 15, threadIdx 480-511, absolute threadIdx 2015-2047
 
 ### Exercise 4
 
-The 8 hypothetical threads have execution times $\vec{t}=(2.0, 2.3, 3.0, 2.8, 2.4, 1.9, 2.6, 2.9)[\mu s]\\,$, respectively. The barrier for the entire block is set by the longest execution time $t_\text{barrier}=3.0\mu s$ until then most of the threads sit idle. The problem asks for the aggregate-waiting-time percentage
+The 8 hypothetical threads have execution times $\vec{t}=(2.0, 2.3, 3.0, 2.8, 2.4, 1.9, 2.6, 2.9)[\mu s]:$, respectively. The barrier for the entire block is set by the longest execution time $t_\text{barrier}=3.0\mu s$ until then most of the threads sit idle. The problem asks for the aggregate-waiting-time percentage
 
 $$
 \begin{align*}
