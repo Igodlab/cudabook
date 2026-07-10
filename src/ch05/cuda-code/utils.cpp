@@ -94,7 +94,7 @@ void save_matrix_csv(const std::string& filename,
             "save_matrix_csv: data.size() (" + std::to_string(data.size()) +
             ") != rows*cols (" + std::to_string(rows * cols) + ")");
  
-    // create out/ (and any parents) if they don't exist yet
+    /* create out/ (and any parents) if they don't exist yet */
     fs::create_directories(out_dir);
  
     const std::string path = out_dir + "/" + filename;

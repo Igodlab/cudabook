@@ -10,6 +10,8 @@ void vecAddKernel(float* A, float* B, float* C, int n){
 
 void vecAdd(float* A_h, float* B_h, float* C_h, int n) {
   int size = n * sizeof(float);
+
+  // Initialize variables to be copied to GPU device
   float *A_d, *B_d, *C_d;
 
   cudaMalloc((void **) &A_d, (size_t) size);
