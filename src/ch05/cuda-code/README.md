@@ -168,7 +168,7 @@ Assuming register and shared memory capacity limitations were not an issue - *sh
 
 ### Exercise 5
 
-If we use a 32 x 32 tile in squared matmul the reduction of memory bandwidth is 32 for each M and N matrx dimensions.
+If we use a 32 x 32 tile in squared matmul the reduction of memory bandwidth is 32 for a $M \times N$ matrix.
 
 ### Exercise 6
 
