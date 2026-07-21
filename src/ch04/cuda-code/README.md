@@ -183,19 +183,19 @@ $$
 this condition is met (less than 32 blocks/SM). So this configuration can achieve a throughput of
 
 $$
-128\frac{\text{threads}}{\text{block}} \times 16\frac{\text{blocks}}{\text{SM}} = 2048 \frac{\text{threads}}{\text{SM}} \rightarrow \text{occupancy} = 100\times\frac{2048}{2048} = 100\%
+128\frac{\text{threads}}{\text{block}} \times 16\frac{\text{blocks}}{\text{SM}} = 2048 \frac{\text{threads}}{\text{SM}} \rightarrow \text{occupancy} = 100\times\frac{2048}{2048} = 100\\%
 $$
 
 - **8.b.** The kernel uses 32 threads/block and 29 registers/thread. Same procedure as *8.a.* this configuration demands → 2259 threads/SM (capped at 2048) and 64 blocks/SM (capped at 32). Realistically this configuration can only operate at 
 
 $$
-32 \frac{\text{threads}}{\text{block}} \times 32\frac{\text{blocks}}{\text{SM}} = 1024 \frac{\text{threads}}{\text{SM}} \rightarrow \text{occupancy} = 100\times\frac{1024}{2048} = 50\%
+32 \frac{\text{threads}}{\text{block}} \times 32\frac{\text{blocks}}{\text{SM}} = 1024 \frac{\text{threads}}{\text{SM}} \rightarrow \text{occupancy} = 100\times\frac{1024}{2048} = 50\\%
 $$
 
 - **8.c.** The kernel uses 256 threads/block and 34 registers/thread. This configuration demands 1927 threads/SM and 7 blocks/SM which meets hardware constraints. Reallistically it can achieve a throughput of
 
 $$
-256\frac{\text{threads}}{\text{block}} \times 7\frac{\text{blocks}}{\text{SM}} = 1792 \frac{\text{threads}}{\text{SM}} \rightarrow \text{occupancy} = 100\times\frac{1792}{2048} = 87.5\%
+256\frac{\text{threads}}{\text{block}} \times 7\frac{\text{blocks}}{\text{SM}} = 1792 \frac{\text{threads}}{\text{SM}} \rightarrow \text{occupancy} = 100\times\frac{1792}{2048} = 87.5\\%
 $$
 
 ### Exercise 9
