@@ -92,11 +92,11 @@ void vecAddKernel(float* A, float* B, float* C, int n){
 10 }
 ```
 
-**9.a.** - 128 threads/block.
-**9.b.** - $1563\times 32=200064$ threads in grid.
-**9.c.** - $(N+128-1)/128 = 1563$ blocks in grid.
-**9.d.** - All 200064 threads are executed on code line `02`.
-**9.e.** - Only 200000 threads are executed on code line `04`.
+- **9.a.** - 128 threads/block.
+- **9.b.** - $1563\times 32=200064$ threads in grid.
+- **9.c.** - $(N+128-1)/128 = 1563$ blocks in grid.
+- **9.d.** - All 200064 threads are executed on code line `02`.
+- **9.e.** - Only 200000 threads are executed on code line `04`.
 
 ### Exercise 10
 

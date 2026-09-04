@@ -4,16 +4,17 @@ let v:this_session=expand("<sfile>:p")
 doautoall SessionLoadPre
 silent only
 silent tabonly
-cd ~/Documents/cs/pmpp/src/ch05/cuda-code
+cd ~/Documents/cs/pmpp/src/ch02/cuda-code
 if expand('%') == '' && !&modified && line('$') <= 1 && getline(1) == ''
   let s:wipebuf = bufnr('%')
 endif
 let s:shortmess_save = &shortmess
 set shortmess+=aoO
-badd +7 ~/Documents/cs/pmpp/src/ch05/cuda-code/README.md
+badd +95 ~/Documents/cs/pmpp/src/ch02/cuda-code/README.md
+badd +5 ~/Documents/cs/pmpp/CMakeLists.txt
 argglobal
 %argdel
-edit ~/Documents/cs/pmpp/src/ch05/cuda-code/README.md
+edit ~/Documents/cs/pmpp/src/ch02/cuda-code/README.md
 wincmd t
 let s:save_winminheight = &winminheight
 let s:save_winminwidth = &winminwidth
@@ -32,11 +33,11 @@ setlocal foldnestmax=20
 setlocal foldenable
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 34 - ((33 * winheight(0) + 18) / 36)
+let s:l = 95 - ((20 * winheight(0) + 15) / 30)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 34
+keepjumps 95
 normal! 0
 tabnext 1
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0 && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
